@@ -1,0 +1,49 @@
+{
+  "schema": "ECOMEX_slide_spec_schema_v3.json",
+  "note": "Example only. Dummy content; not a factual lesson nor a validated finished presentation.",
+  "slides": [
+    {
+      "slide_id": "DEMO-D01-S01",
+      "order": 1,
+      "purpose": "intro",
+      "layout_id": "ECOMEX_01",
+      "fields": {
+        "headline": "Beispielmodul: KI in Arbeitsprozessen",
+        "presenter": "Dozent/in: Mustername",
+        "day_label": "Tag 1"
+      },
+      "status": "draft"
+    },
+    {
+      "slide_id": "DEMO-D01-S02",
+      "order": 2,
+      "purpose": "content",
+      "layout_id": "ECOMEX_39",
+      "fields": {
+        "headline": "Technische Möglichkeit und organisatorischer Nutzen",
+        "left_label": "Perspektive A",
+        "left_message": "Was lässt sich automatisieren?",
+        "left_detail": "Technische Voraussetzungen und Grenzen",
+        "right_label": "Perspektive B",
+        "right_message": "Was sollte automatisiert werden?",
+        "right_detail": "Nutzen, Verantwortung und Risiken"
+      },
+      "status": "draft"
+    },
+    {
+      "slide_id": "DEMO-D01-S03",
+      "order": 3,
+      "purpose": "exercise",
+      "layout_id": "ECOMEX_49",
+      "fields": {
+        "headline": "Übung: Einen Prozess kritisch bewerten",
+        "task_label": "Arbeitsauftrag",
+        "task_details": "Wähle eine repetitive Tätigkeit und prüfe Nutzen, Risiken und Kontrolle.",
+        "step_1": "Ausgangslage skizzieren",
+        "step_2": "Zwei Lösungswege vergleichen",
+        "step_3": "Entscheidung begründen"
+      },
+      "status": "draft"
+    }
+  ]
+}

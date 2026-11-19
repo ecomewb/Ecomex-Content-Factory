@@ -1,0 +1,2489 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ecomex.internal/schemas/slide-spec-v3.schema.json",
+  "title": "ECOMEX Content Factory – SlideSpec v3 (prototype)",
+  "description": "Layout-aware validation. This is a structural schema; semantic QA/render checks are still essential.",
+  "type": "object",
+  "properties": {
+    "slide_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "order": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "intro",
+        "instructor_intro",
+        "day_agenda",
+        "content",
+        "section_transition",
+        "exercise",
+        "homework",
+        "feedback",
+        "outro",
+        "coffee_break",
+        "lunch_break"
+      ]
+    },
+    "layout_id": {
+      "type": "string",
+      "enum": [
+        "ECOMEX_01",
+        "ECOMEX_02",
+        "ECOMEX_03",
+        "ECOMEX_04",
+        "ECOMEX_05",
+        "ECOMEX_06",
+        "ECOMEX_07",
+        "ECOMEX_08",
+        "ECOMEX_09",
+        "ECOMEX_12",
+        "ECOMEX_13",
+        "ECOMEX_14",
+        "ECOMEX_15",
+        "ECOMEX_16",
+        "ECOMEX_17",
+        "ECOMEX_18",
+        "ECOMEX_19",
+        "ECOMEX_20",
+        "ECOMEX_21",
+        "ECOMEX_22",
+        "ECOMEX_23",
+        "ECOMEX_24",
+        "ECOMEX_25",
+        "ECOMEX_26",
+        "ECOMEX_27",
+        "ECOMEX_28",
+        "ECOMEX_31",
+        "ECOMEX_32",
+        "ECOMEX_33",
+        "ECOMEX_34",
+        "ECOMEX_35",
+        "ECOMEX_36",
+        "ECOMEX_37",
+        "ECOMEX_38",
+        "ECOMEX_39",
+        "ECOMEX_40",
+        "ECOMEX_41",
+        "ECOMEX_42",
+        "ECOMEX_43",
+        "ECOMEX_44",
+        "ECOMEX_45",
+        "ECOMEX_46",
+        "ECOMEX_47",
+        "ECOMEX_48",
+        "ECOMEX_49",
+        "ECOMEX_50",
+        "ECOMEX_51",
+        "ECOMEX_10",
+        "ECOMEX_11",
+        "ECOMEX_30"
+      ]
+    },
+    "fields": {
+      "type": "object"
+    },
+    "learning_objective_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "teacher_notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "estimated_minutes": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "reviewed",
+        "approved"
+      ]
+    }
+  },
+  "required": [
+    "slide_id",
+    "order",
+    "purpose",
+    "layout_id",
+    "fields",
+    "status"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_01"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "brand_artwork_optional": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "day_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "presenter": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "cover_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                }
+              },
+              "required": [
+                "headline",
+                "day_label",
+                "presenter"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_02"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "presenter_photo": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "prompt_1_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_2_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_3_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_4_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "presenter_name": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "presenter_role": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "presenter_name",
+                "presenter_role"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_03"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "intro_text": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "intro_text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_04"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "day_agenda": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "day_agenda"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_05"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "key_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "key_message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_06"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "key_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "key_message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_07"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "hero_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "section_eyebrow": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "section_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "section_eyebrow",
+                "section_message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_08"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "break_minutes": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "break_minutes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_09"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "break_minutes": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "break_minutes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_12"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_13"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "supporting_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "task_details": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "task_summary": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "task_details",
+                "task_summary"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_14"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "supporting_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "task_details": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "task_summary": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "task_details",
+                "task_summary"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_15"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "left_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "left_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "right_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "right_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "left_label",
+                "left_description",
+                "right_description",
+                "headline",
+                "right_label"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_16"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_4": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_4": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_5": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_5": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_6": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_6": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_7": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_7": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "definition_8": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "term_8": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "definition_1",
+                "term_1",
+                "definition_2",
+                "term_2",
+                "definition_3",
+                "term_3",
+                "definition_4",
+                "term_4",
+                "definition_5",
+                "term_5",
+                "definition_6",
+                "term_6",
+                "definition_7",
+                "term_7",
+                "definition_8",
+                "term_8"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_17"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "key_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "main_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "key_label",
+                "main_message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_18"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "item_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "item_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "item_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "category_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "item_1",
+                "item_2",
+                "item_3",
+                "category_label"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_19"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quote": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "quote"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_20"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "quote": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "quote"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_21"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_22"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "supporting_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "subheading": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "subheading",
+                "body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_23"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "primary_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "secondary_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "primary_message",
+                "secondary_message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_24"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_image_1": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "step_image_2": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "step_description_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_description_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "step_description_1",
+                "step_description_2"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_25"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "dialog_heading": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "dialog_body_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "dialog_body_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "dialog_heading",
+                "dialog_body_1",
+                "dialog_body_2"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_26"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "supporting_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "heading": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "short_quote": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "body",
+                "heading",
+                "short_quote"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_27"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "screenshot": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "annotation": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "explanation": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_28"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "column_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "column_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "column_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "column_1",
+                "column_2",
+                "column_3"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_31"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "supporting_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_32"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "supporting_image": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "text_left": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "text_right": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "extra_text": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "text_left",
+                "text_right"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_33"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_34"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "subtitle": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_1_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_1_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_2_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_2_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_3_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_3_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_4_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_4_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "step_1_title",
+                "step_1_body",
+                "step_2_title",
+                "step_2_body",
+                "step_3_title",
+                "step_3_body",
+                "step_4_title",
+                "step_4_body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_35"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_1_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_1_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_2_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_2_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_3_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_3_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_4_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_4_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "step_1_title",
+                "step_1_body",
+                "step_2_title",
+                "step_2_body",
+                "step_3_title",
+                "step_3_body",
+                "step_4_title",
+                "step_4_body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_36"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_1_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_2_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_3_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_4_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_1_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_2_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_3_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "phase_4_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "center_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "phase_1_title",
+                "phase_2_title",
+                "phase_3_title",
+                "phase_4_title",
+                "phase_1_body",
+                "phase_2_body",
+                "phase_3_body",
+                "phase_4_body",
+                "center_label"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_37"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "perspective_1_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "perspective_1_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "perspective_2_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "perspective_2_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "perspective_3_title": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "perspective_3_body": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "perspective_1_title",
+                "perspective_1_body",
+                "perspective_2_title",
+                "perspective_2_body",
+                "perspective_3_title",
+                "perspective_3_body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_38"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "decision_question": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "yes_action": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "yes_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "no_action": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "no_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "decision_question",
+                "yes_action",
+                "yes_detail",
+                "no_action",
+                "no_detail"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_39"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "left_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "left_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "left_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "right_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "right_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "right_detail": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "left_label",
+                "left_message",
+                "left_detail",
+                "right_label",
+                "right_message",
+                "right_detail"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_40"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_1_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_1_action": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_2_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_2_action": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_3_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_3_action": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_4_message": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "quadrant_4_action": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "vertical_axis": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "horizontal_axis": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "quadrant_1_message",
+                "quadrant_1_action",
+                "quadrant_2_message",
+                "quadrant_2_action",
+                "quadrant_3_message",
+                "quadrant_3_action",
+                "quadrant_4_message",
+                "quadrant_4_action",
+                "vertical_axis",
+                "horizontal_axis"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_41"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "subtitle": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "criterion_header": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_1_header": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_2_header": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_3_header": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "criterion_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_1_row_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_2_row_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_3_row_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "criterion_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_1_row_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_2_row_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_3_row_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "criterion_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_1_row_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_2_row_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "option_3_row_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "criterion_header",
+                "option_1_header",
+                "option_2_header",
+                "option_3_header",
+                "criterion_1",
+                "option_1_row_1",
+                "option_2_row_1",
+                "option_3_row_1",
+                "criterion_2",
+                "option_1_row_2",
+                "option_2_row_2",
+                "option_3_row_2",
+                "criterion_3",
+                "option_1_row_3",
+                "option_2_row_3",
+                "option_3_row_3"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_42"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "before_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "before_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "before_comment": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "after_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "after_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "after_comment": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "before_label",
+                "before_description",
+                "after_label",
+                "after_description"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_43"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "observation_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "observation": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "observation_comment": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "cause_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "cause": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "cause_comment": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "effect_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "effect": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "effect_comment": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "observation_label",
+                "observation",
+                "cause_label",
+                "cause",
+                "effect_label",
+                "effect"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_44"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "center": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "factor_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "factor_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "factor_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "factor_4": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "center",
+                "factor_1",
+                "factor_2",
+                "factor_3",
+                "factor_4"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_45"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "layer_1_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "layer_1_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "layer_2_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "layer_2_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "layer_3_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "layer_3_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "layer_1_label",
+                "layer_1_description",
+                "layer_2_label",
+                "layer_2_description",
+                "layer_3_label",
+                "layer_3_description"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_46"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_1_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_1_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_2_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_2_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_3_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_3_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_4_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_4_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_5_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "milestone_5_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "milestone_1_label",
+                "milestone_1_description",
+                "milestone_2_label",
+                "milestone_2_description",
+                "milestone_3_label",
+                "milestone_3_description",
+                "milestone_4_label",
+                "milestone_4_description",
+                "milestone_5_label",
+                "milestone_5_description"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_47"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "funnel_stage_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "funnel_stage_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "funnel_stage_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "funnel_stage_1",
+                "funnel_stage_2",
+                "funnel_stage_3"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_48"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "screenshot": {
+                  "type": "string",
+                  "description": "Text in placeholder; image slot expects approved asset ref"
+                },
+                "callout_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "callout_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "callout_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "callout_1",
+                "callout_2",
+                "callout_3"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_49"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "task_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "task_details": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_1": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_2": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "step_3": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "task_label",
+                "task_details",
+                "step_1",
+                "step_2",
+                "step_3"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_50"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "subtitle": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "role_1_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "role_1_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "role_2_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "role_2_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "role_3_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "role_3_description": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "group_output": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "role_1_label",
+                "role_1_description",
+                "role_2_label",
+                "role_2_description",
+                "role_3_label",
+                "role_3_description",
+                "group_output"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_51"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_1_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_1_question": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_2_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_2_question": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_3_label": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "prompt_3_question": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                },
+                "source_footer": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline",
+                "prompt_1_label",
+                "prompt_1_question",
+                "prompt_2_label",
+                "prompt_2_question",
+                "prompt_3_label",
+                "prompt_3_question"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_10"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "__static_slide_ack": {
+                  "type": "string",
+                  "enum": [
+                    "approved_static_layout"
+                  ]
+                }
+              },
+              "required": [
+                "__static_slide_ack"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_11"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout_id": {
+              "const": "ECOMEX_30"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "type": "string",
+                  "description": "Editable PowerPoint text"
+                }
+              },
+              "required": [
+                "headline"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "layout_id",
+            "fields"
+          ]
+        }
+      ]
+    }
+  ],
+  "x-ecomex-checks": {
+    "purpose_logic": "restricted -> purpose must correspond, specialized -> operational class",
+    "visual": "render each slide to image, inspect clipping/overlap/readability",
+    "notes": "speaker notes require separate actual PPTX check",
+    "branding": "template fonts/colors/logo may not change"
+  }
+}

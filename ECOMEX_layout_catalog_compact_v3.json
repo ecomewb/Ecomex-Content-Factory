@@ -1,0 +1,763 @@
+{
+  "schema_version": "3.0.0-compact",
+  "source_layout_file": "ECOMEX_slide_layouts_v3.json",
+  "usage": "For LLM layout selection only; programmatic renderer fetches full slot_bindings from source layout file for the selected layout_id.",
+  "global_rules": {
+    "order_from": "SlideSpec.order",
+    "do_not_modify": [
+      "fonts",
+      "colors",
+      "ECOMEX logo placement"
+    ],
+    "select_by": "communicative purpose + content shape, not master index or example placeholder text",
+    "no_mechanical_rotation": true,
+    "restricted_layouts_for_reserved_purposes_only": true
+  },
+  "layouts": [
+    {
+      "id": "ECOMEX_01",
+      "name": "01 · Titelseite | Blaues ECOMEX-Cover",
+      "visual_family": "opening",
+      "scope": "restricted",
+      "purpose": "intro",
+      "fields": [
+        "brand_artwork_optional",
+        "headline",
+        "day_label",
+        "presenter",
+        "cover_image"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_02",
+      "name": "02 · Dozentenprofil | Steckbrief",
+      "visual_family": "people",
+      "scope": "specialized",
+      "purpose": "instructor_intro",
+      "fields": [
+        "presenter_photo",
+        "prompt_1_detail",
+        "prompt_2_detail",
+        "prompt_3_detail",
+        "prompt_4_detail",
+        "presenter_name",
+        "presenter_role"
+      ],
+      "renderer_readiness": "NEEDS_STATIC_CONTENT_REVIEW"
+    },
+    {
+      "id": "ECOMEX_03",
+      "name": "03 · Einstieg | Bildschirm und Personen",
+      "visual_family": "opening",
+      "scope": "restricted",
+      "purpose": "intro",
+      "fields": [
+        "headline",
+        "intro_text"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_04",
+      "name": "04 · Tagesagenda | Blau",
+      "visual_family": "agenda",
+      "scope": "specialized",
+      "purpose": "day_agenda",
+      "fields": [
+        "day_agenda"
+      ],
+      "renderer_readiness": "MANUAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "ECOMEX_05",
+      "name": "05 · Bildfolie | Großmotiv Koralle",
+      "visual_family": "visual_emphasis",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "key_message"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_06",
+      "name": "06 · Bildfolie | Großmotiv Dunkel",
+      "visual_family": "visual_emphasis",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "key_message"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_07",
+      "name": "07 · Kapitelbalken | Dunkelblau",
+      "visual_family": "section_transition",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "hero_image",
+        "section_eyebrow",
+        "section_message"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_08",
+      "name": "08 · Kaffeepause | Original",
+      "visual_family": "break",
+      "scope": "specialized",
+      "purpose": "coffee_break",
+      "fields": [
+        "break_minutes"
+      ],
+      "renderer_readiness": "NEEDS_STATIC_CONTENT_REVIEW"
+    },
+    {
+      "id": "ECOMEX_09",
+      "name": "09 · Mittagspause | Original",
+      "visual_family": "break",
+      "scope": "specialized",
+      "purpose": "lunch_break",
+      "fields": [
+        "break_minutes"
+      ],
+      "renderer_readiness": "NEEDS_STATIC_CONTENT_REVIEW"
+    },
+    {
+      "id": "ECOMEX_12",
+      "name": "12 · Inhalt | Titel und Freifläche",
+      "visual_family": "open_content",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "body"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_13",
+      "name": "13 · Praxis | Hausaufgabe",
+      "visual_family": "homework",
+      "scope": "restricted",
+      "purpose": "homework",
+      "fields": [
+        "supporting_image",
+        "task_details",
+        "task_summary"
+      ],
+      "renderer_readiness": "NEEDS_STATIC_CONTENT_REVIEW"
+    },
+    {
+      "id": "ECOMEX_14",
+      "name": "14 · Praxis | Übungsaufgabe",
+      "visual_family": "exercise",
+      "scope": "restricted",
+      "purpose": "exercise",
+      "fields": [
+        "supporting_image",
+        "task_details",
+        "task_summary"
+      ],
+      "renderer_readiness": "NEEDS_STATIC_CONTENT_REVIEW"
+    },
+    {
+      "id": "ECOMEX_15",
+      "name": "15 · Vergleich | Pro & Contra",
+      "visual_family": "comparison",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "left_label",
+        "left_description",
+        "right_description",
+        "headline",
+        "right_label"
+      ],
+      "renderer_readiness": "MANUAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "ECOMEX_16",
+      "name": "16 · Glossar | Zweispaltig",
+      "visual_family": "glossary",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "definition_1",
+        "term_1",
+        "definition_2",
+        "term_2",
+        "definition_3",
+        "term_3",
+        "definition_4",
+        "term_4",
+        "definition_5",
+        "term_5",
+        "definition_6",
+        "term_6",
+        "definition_7",
+        "term_7",
+        "definition_8",
+        "term_8"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_17",
+      "name": "17 · Aussage | Überlagerte Blauflächen",
+      "visual_family": "key_message",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "key_label",
+        "main_message"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_18",
+      "name": "18 · Fakten | Gestaffelte Elemente",
+      "visual_family": "facts",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "item_1",
+        "item_2",
+        "item_3",
+        "category_label"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_19",
+      "name": "19 · Zitat | Kontur Koralle",
+      "visual_family": "quote",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "quote"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_20",
+      "name": "20 · Zitat | Kreis Grün",
+      "visual_family": "quote",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "quote"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_21",
+      "name": "21 · Infokasten | Hellblau abgerundet",
+      "visual_family": "explanation",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "body"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_22",
+      "name": "22 · Inhalt | Titel und Fließtext",
+      "visual_family": "image_text",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "supporting_image",
+        "subheading",
+        "body"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_23",
+      "name": "23 · Inhaltsfläche | Hellblau",
+      "visual_family": "text_structure",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "primary_message",
+        "secondary_message"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_24",
+      "name": "24 · Prozess | Zwei Pfeile",
+      "visual_family": "process",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "step_image_1",
+        "step_image_2",
+        "step_description_1",
+        "step_description_2"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_25",
+      "name": "25 · Prozess | Dialogkarten",
+      "visual_family": "dialog",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "dialog_heading",
+        "dialog_body_1",
+        "dialog_body_2"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_26",
+      "name": "26 · Tooldemo | Bildschirm mit Infokasten",
+      "visual_family": "tool_demo",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "body",
+        "supporting_image",
+        "heading",
+        "short_quote"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_27",
+      "name": "27 · Tooldemo | Screenshot und Erklärung",
+      "visual_family": "tool_demo",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "screenshot",
+        "annotation",
+        "headline",
+        "explanation"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_28",
+      "name": "28 · Übersicht | Drei Spalten",
+      "visual_family": "three_column",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "column_1",
+        "column_2",
+        "column_3"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_31",
+      "name": "31 · Praxis | Bild und Lösungsbereich",
+      "visual_family": "image_text",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "supporting_image",
+        "headline",
+        "body"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_32",
+      "name": "32 · Bild und Text | Zweispaltig",
+      "visual_family": "image_text",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "supporting_image",
+        "text_left",
+        "text_right",
+        "extra_text"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_33",
+      "name": "33 · Freiraum | Titel und Blanko",
+      "visual_family": "blank_canvas",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_34",
+      "name": "34 · Prozess | Vier Etappen",
+      "visual_family": "process",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "subtitle",
+        "step_1_title",
+        "step_1_body",
+        "step_2_title",
+        "step_2_body",
+        "step_3_title",
+        "step_3_body",
+        "step_4_title",
+        "step_4_body"
+      ],
+      "renderer_readiness": "MANUAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "ECOMEX_35",
+      "name": "35 · Prozess | Vertikale Abfolge",
+      "visual_family": "process",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "step_1_title",
+        "step_1_body",
+        "step_2_title",
+        "step_2_body",
+        "step_3_title",
+        "step_3_body",
+        "step_4_title",
+        "step_4_body"
+      ],
+      "renderer_readiness": "MANUAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "ECOMEX_36",
+      "name": "36 · Zyklus | Vier Phasen",
+      "visual_family": "cycle",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "phase_1_title",
+        "phase_2_title",
+        "phase_3_title",
+        "phase_4_title",
+        "phase_1_body",
+        "phase_2_body",
+        "phase_3_body",
+        "phase_4_body",
+        "center_label"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_37",
+      "name": "37 · Zyklus | Drei Rückkopplungen",
+      "visual_family": "cycle",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "perspective_1_title",
+        "perspective_1_body",
+        "perspective_2_title",
+        "perspective_2_body",
+        "perspective_3_title",
+        "perspective_3_body"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_38",
+      "name": "38 · Entscheidung | Prüfpfad",
+      "visual_family": "decision",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "decision_question",
+        "yes_action",
+        "yes_detail",
+        "no_action",
+        "no_detail"
+      ],
+      "renderer_readiness": "MANUAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "ECOMEX_39",
+      "name": "39 · Vergleich | Zwei Perspektiven",
+      "visual_family": "comparison",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "left_label",
+        "left_message",
+        "left_detail",
+        "right_label",
+        "right_message",
+        "right_detail"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_40",
+      "name": "40 · Vergleich | 2×2-Matrix",
+      "visual_family": "matrix",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "quadrant_1_message",
+        "quadrant_1_action",
+        "quadrant_2_message",
+        "quadrant_2_action",
+        "quadrant_3_message",
+        "quadrant_3_action",
+        "quadrant_4_message",
+        "quadrant_4_action",
+        "vertical_axis",
+        "horizontal_axis"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_41",
+      "name": "41 · Vergleich | Kriterienraster",
+      "visual_family": "matrix",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "subtitle",
+        "criterion_header",
+        "option_1_header",
+        "option_2_header",
+        "option_3_header",
+        "criterion_1",
+        "option_1_row_1",
+        "option_2_row_1",
+        "option_3_row_1",
+        "criterion_2",
+        "option_1_row_2",
+        "option_2_row_2",
+        "option_3_row_2",
+        "criterion_3",
+        "option_1_row_3",
+        "option_2_row_3",
+        "option_3_row_3"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_42",
+      "name": "42 · Erklärung | Vorher – Nachher",
+      "visual_family": "comparison",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "before_label",
+        "before_description",
+        "before_comment",
+        "after_label",
+        "after_description",
+        "after_comment"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_43",
+      "name": "43 · Erklärung | Ursache – Wirkung",
+      "visual_family": "causality",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "observation_label",
+        "observation",
+        "observation_comment",
+        "cause_label",
+        "cause",
+        "cause_comment",
+        "effect_label",
+        "effect",
+        "effect_comment"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_44",
+      "name": "44 · Schaubild | Mittelpunkt & Umfeld",
+      "visual_family": "systems_map",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "center",
+        "factor_1",
+        "factor_2",
+        "factor_3",
+        "factor_4"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_45",
+      "name": "45 · Schaubild | Schichtenmodell",
+      "visual_family": "layers",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "layer_1_label",
+        "layer_1_description",
+        "layer_2_label",
+        "layer_2_description",
+        "layer_3_label",
+        "layer_3_description"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_46",
+      "name": "46 · Übersicht | Zeitstrahl",
+      "visual_family": "timeline",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "milestone_1_label",
+        "milestone_1_description",
+        "milestone_2_label",
+        "milestone_2_description",
+        "milestone_3_label",
+        "milestone_3_description",
+        "milestone_4_label",
+        "milestone_4_description",
+        "milestone_5_label",
+        "milestone_5_description"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_47",
+      "name": "47 · Schaubild | Priorisierungstrichter",
+      "visual_family": "funnel",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "funnel_stage_1",
+        "funnel_stage_2",
+        "funnel_stage_3"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_48",
+      "name": "48 · Erklärung | Screenshot & Hinweise",
+      "visual_family": "screenshot_explanation",
+      "scope": "flexible",
+      "purpose": null,
+      "fields": [
+        "headline",
+        "screenshot",
+        "callout_1",
+        "callout_2",
+        "callout_3"
+      ],
+      "renderer_readiness": "MANUAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "ECOMEX_49",
+      "name": "49 · Übung | Auftrag & Ergebnis",
+      "visual_family": "exercise",
+      "scope": "restricted",
+      "purpose": "exercise",
+      "fields": [
+        "headline",
+        "task_label",
+        "task_details",
+        "step_1",
+        "step_2",
+        "step_3"
+      ],
+      "renderer_readiness": "MANUAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "ECOMEX_50",
+      "name": "50 · Übung | Gruppenrollen",
+      "visual_family": "group_exercise",
+      "scope": "restricted",
+      "purpose": "exercise",
+      "fields": [
+        "headline",
+        "subtitle",
+        "role_1_label",
+        "role_1_description",
+        "role_2_label",
+        "role_2_description",
+        "role_3_label",
+        "role_3_description",
+        "group_output"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_51",
+      "name": "51 · Übung | Reflexion & Transfer",
+      "visual_family": "exercise_reflection",
+      "scope": "restricted",
+      "purpose": "exercise",
+      "fields": [
+        "headline",
+        "prompt_1_label",
+        "prompt_1_question",
+        "prompt_2_label",
+        "prompt_2_question",
+        "prompt_3_label",
+        "prompt_3_question"
+      ],
+      "renderer_readiness": "PLACEHOLDER_MAPPING_DRAFT"
+    },
+    {
+      "id": "ECOMEX_10",
+      "name": "10 · Feedback | Stimmen",
+      "visual_family": "feedback",
+      "scope": "restricted",
+      "purpose": "feedback",
+      "fields": [],
+      "renderer_readiness": "NO_EDITABLE_PLACEHOLDERS_STATIC_FEEDBACK"
+    },
+    {
+      "id": "ECOMEX_11",
+      "name": "11 · Feedback | Gruppenfoto",
+      "visual_family": "feedback",
+      "scope": "restricted",
+      "purpose": "feedback",
+      "fields": [
+        "headline"
+      ],
+      "renderer_readiness": "NEEDS_STATIC_CONTENT_REVIEW"
+    },
+    {
+      "id": "ECOMEX_30",
+      "name": "30 · Abschluss | Danke",
+      "visual_family": "closing",
+      "scope": "restricted",
+      "purpose": "outro",
+      "fields": [
+        "headline"
+      ],
+      "renderer_readiness": "NEEDS_STATIC_CONTENT_REVIEW"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "version": "0.1.1",
+  "files": {
+    ".env.example": {
+      "sha256": "2adebe2901285af72678ad0aeed6c58f641dd9d611bec018d6dca04bde0a3b37",
+      "bytes": 213
+    },
+    ".gitignore": {
+      "sha256": "80e95bf5bcf686142253c7aebf23cb5be9e111328eb52f7e62c7b39526ac994a",
+      "bytes": 100
+    },
+    "README.md": {
+      "sha256": "7fdeb523c93d76ebb8cda495f5e6ad9be48f23857d025094858c68ce4f7c629c",
+      "bytes": 1529
+    },
+    "database/001_create_kb.sql": {
+      "sha256": "51a79c3981ae03330a7cb01edb4ea39e24397f347388156e3b8605d30c689ce4",
+      "bytes": 4943
+    },
+    "database/002_pruefen_ohne_schreiben.sql": {
+      "sha256": "69abe0d3099329c6927d4787cb9c7dab9d8036f2407553e79e603d8a0ce7e77c",
+      "bytes": 860
+    },
+    "design/ECOMEX_Masterlayout_6.1.pptx": {
+      "sha256": "05ca37def20fec8b4693e9c4f08ebab5bc4b4a411fdb41cfa8445900694d0181",
+      "bytes": 19445686
+    },
+    "design/ECOMEX_layout_catalog_compact_v3.json": {
+      "sha256": "303d6ae2a55db949434dad599b663b6f14c2bdbd7eb1890aba11f9ac1fbf72b6",
+      "bytes": 19477
+    },
+    "design/ECOMEX_slide_layouts_v3.json": {
+      "sha256": "38e3a5f7d38ba6a503fa70bec5df93f28a298f8366be9826bac9d968bd0bd1a4",
+      "bytes": 328436
+    },
+    "design/ECOMEX_slide_spec_schema_v3.json": {
+      "sha256": "4c12de7bbffcae8d9fd92cddb5205f5ef76441bcacb7f2273994fd583960f280",
+      "bytes": 74961
+    },
+    "docs/01_Einrichtung_fuer_Einsteiger.md": {
+      "sha256": "a0a5ec774e2557284a63b748d8362c10ba12f95b82f549e0c572d88c22e5446c",
+      "bytes": 7179
+    },
+    "docs/02_Datenpflege_und_Qualitaet.md": {
+      "sha256": "fbdbb7eaa39e361a9eea959e23bc6f0d79842cac3b73e0ab02bdb1f938118fb3",
+      "bytes": 2971
+    },
+    "docs/03_Agenten_und_n8n.md": {
+      "sha256": "c098eee54429d843e6db8defe2b85378f60936a2837f733f049fc0e1e36c1e38",
+      "bytes": 3368
+    },
+    "governance/content_workflow.md": {
+      "sha256": "386d67c5cac3c7a629d9d18e81bc7d90b1dbd5d6ac1a3e80003341192c703a17",
+      "bytes": 28123
+    },
+    "governance/curriculum.md": {
+      "sha256": "53bb00728ca09b0ef8c4b1733138d1396255c9e943e0a50c8d2da37b7ec47a5a",
+      "bytes": 20048
+    },
+    "governance/design.md": {
+      "sha256": "32ab7ef9a510ac454a76388a6ef7cc9172307fa31f18ee238b8cad00eabe38a8",
+      "bytes": 14595
+    },
+    "governance/didaktik.md": {
+      "sha256": "9c6620d89e256081fe3adcb060846777f3f0fb13831c4ac3da80212be96e41bb",
+      "bytes": 34839
+    },
+    "governance/optional_methods/ki_kuratierte_projektreise_repoabgleich_v0.2.md": {
+      "sha256": "5ad3c749e24fd64f43eef838abcc90742f0ee34660b104259283cb871978ee70",
+      "bytes": 28258
+    },
+    "governance/qa_rules.md": {
+      "sha256": "c804255d0b54d09edc557507be06efc6f465ff02f6d8099c7924690b998f00b1",
+      "bytes": 19022
+    },
+    "samples/ECOMEX_slide_specs_examples_v3.json": {
+      "sha256": "48f0132b1f27839fcf657f2621b7aede40c5c4ff2737dd723e17b92f83a63370",
+      "bytes": 1580
+    },
+    "samples/source_registry_example.csv": {
+      "sha256": "0d95d1035255ca4a90e674ee981f2c6291fbfa5853a0b42cd7fb5a4c677782b8",
+      "bytes": 261
+    }
+  }
+}

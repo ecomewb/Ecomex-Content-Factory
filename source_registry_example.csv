@@ -1,0 +1,2 @@
+source_id,title,source_type,storage_provider,storage_uri,module_id,review_status,access_class,version_label,notes
+S-DEMO-001,Beispiel Referenzdeck,pptx,sharepoint,SHAREPOINT-PATH-NOCH-EINTRAGEN,M07,reference,internal,0.1,Demozeile nicht automatisch importieren
