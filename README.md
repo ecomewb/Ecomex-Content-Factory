@@ -13,7 +13,9 @@
 
 Die fünf Dateien unter `governance/` stammen aus dem vorhandenen Wissensstand. **Es wurde kein Inhalt umgeschrieben**, es wird kein `working_draft` zu `approved` erklärt. Ergänzende KI-kuratierte Methode unter `optional_methods/` bleibt optional.
 
-Der bestehende `ECOMEX_Masterlayout_6.1.pptx` und die technische Layoutbibliothek werden als Designreferenz eingebunden. Die PPTX kann alternativ in SharePoint liegen und nur referenziert werden.
+Der aktuelle Folienmaster `design/ECOMEX_Masterlayout_6.2.pptx` und die technische Layoutbibliothek werden als Designreferenz eingebunden. Die PPTX kann alternativ in SharePoint liegen und nur referenziert werden.
+
+**Hinweis Layoutbibliothek:** Die Dateien `design/ECOMEX_*_v3.json` wurden aus Master 6.1 erzeugt. Master 6.2 enthält zusätzlich u. a. Frage 1–5 sowie Kapitel/Unterkapitel/Inhalt in Farbvarianten; die Bildfolien „05/06 · Bildfolie | Großmotiv“ aus 6.1 fehlen in 6.2. Der Katalog wird im nächsten Schritt an 6.2 angeglichen.
 
 ## Nicht enthalten
 

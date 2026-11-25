@@ -36,7 +36,7 @@ Die neun zugelieferten Quelldokumente sind am Ende mit stabilen Kennungen `S01`�
 
 **Übergeordnetes Kompetenzziel:** Absolventinnen und Absolventen können KI im Beruf sinnvoll und sicher einsetzen, geeignete Anwendungsfälle begründen, ausgewählte Automatisierungen und Agenten umsetzen, die Einführung von KI-Lösungen planen und andere Menschen bei der Nutzung begleiten. Ein Abschlussprojekt soll diese Fähigkeiten anhand konkreter Arbeitsergebnisse sichtbar machen. [S01–S03]
 
-**Zielgruppe:** Berufserfahrene Erwachsene und qualifizierte Quereinsteigerinnen und -einsteiger mit unterschiedlichen Berufsbiografien, darunter Projekt-, Prozess-, Verwaltungs-, Marketing-, HR-, Beratungs-, Bildungs- und Servicekontexte. Angestrebt wird ein gemeinsames berufliches Kompetenzniveau bei sehr unterschiedlicher KI-Erfahrung. **Keine reguläre Zielsetzung:** Ausbildung zu Software Engineers, Data Scientists oder tief spezialisierten ML-Forschenden. Ausreichende digitale Basiskompetenz ist vorausgesetzt bzw. vorab zu diagnostizieren. [S03, S09]
+**Zielgruppe:** Berufserfahrene Erwachsene und qualifizierte Quereinsteigerinnen und -einsteiger mit unterschiedlichen Berufsbiografien, darunter Projekt-, Prozess-, Verwaltungs-, Marketing-, HR-, Beratungs-, Bildungs- und Servicekontexte. Angestrebt wird ein gemeinsames berufliches Kompetenzniveau bei sehr unterschiedlicher KI-Erfahrung.Personen aus nativer IT oder IT-nahen Berufsgruppen sind nicht die primäre Zielgruppe, können vereinzelt aber in Kursen sein. **Keine reguläre Zielsetzung:** Ausbildung zu Software Engineers, Data Scientists oder tief spezialisierten ML-Forschenden. Ausreichende digitale Basiskompetenz ist vorausgesetzt bzw. vorab zu diagnostizieren. [S03, S09]
 
 **Produktlogik:** Der 16-Wochen-Pfad ist ein umfassender Qualifizierungsweg; kürzere, passendere Lernpfade bleiben prinzipiell möglich. Die Inhalte werden als wiederverwendbare Module konzipiert, nicht als starre „16 Wochen für alle“. Ob und welche Zwischenabschlüsse tatsächlich zertifiziert werden, ist offen. [S09]
 
@@ -45,8 +45,8 @@ Die neun zugelieferten Quelldokumente sind am Ende mit stabilen Kennungen `S01`�
 | Phase | Wochen | Leitfrage | Zielkompetenz / Exit-Outcome |
 |---|---:|---|---|
 | **USE – Anwenden** | 1–4 | Wie setze ich KI sinnvoll und sicher ein und wie funktionieren die Grundlagen? | KI produktiv nutzen, geeignete Use Cases erkennen und einen digitalen Lösungsweg erläutern. |
-| **BUILD – Umsetzen** | 5–8 | Wie baue und prüfe ich reale Arbeitsabläufe und Agenten? | Einen dokumentierten n8n-Workflow und einen Copilot-Studio-Agenten für begrenzte Aufgaben entwickeln und testen. |
-| **TRANSFORM – Einführen und weiterentwickeln** | 9–12 | Welches Problem lösen wir und wie führen wir die Lösung sinnvoll ein? | Nutzerbedarf ermitteln, Prototyp bauen, Lösungsalternativen bewerten und iterative Einführung planen. |
+| **BUILD – Umsetzen** | 5–8 | Wie baue und prüfe ich reale Arbeitsabläufe und Agenten? | Einen dokumentierten n8n-Workflow/Agenten und einen Copilot-Studio-Agenten für begrenzte Aufgaben entwickeln und testen. |
+| **TRANSFORM – Einführen und weiterentwickeln** | 9–12 | Welches Problem lösen wir und wie führen wir die Lösung sinnvoll ein? | Strategie und Nutzerbedarf ermitteln, Prototyp bauen, Lösungsalternativen bewerten und iterative Einführung planen. |
 | **ENABLE – Befähigen** | 13–16 | Wie lernen andere Menschen den sinnvollen Einsatz? | Schulung, Einführung, Veränderungsbegleitung und ein integriertes Abschlussprojekt gestalten. |
 
 **Lernlogik [REGEL]:** Von *anwenden* über *selbst umsetzen* zu *beurteilen/einführen* und schließlich *befähigen*. Jede Phase benötigt einen eigenständigen beobachtbaren Kompetenzzuwachs und baut auf verwertbaren Arbeitsergebnissen vorheriger Phasen auf. **Keine isolierte Sammlung von Tools.** [S01, S02]
@@ -60,15 +60,15 @@ Die 12 Module ergeben insgesamt 656 UE. Die folgenden konkreten Outcomes operati
 | M01 | 1–2 | KI im Berufsalltag professionell nutzen | 82 | GenAI, ChatGPT/Claude/Gemini/Copilot, Prompting, Recherche, Dokumente, Präsentationen, Medien, Daten, Quellen- und Ergebnisprüfung | Wiederverwendbarer, überprüfter KI-Arbeitsablauf plus Abschlussdemo |
 | M02 | 3 | Power Using und KI-Anwendungsfälle | 41 | wiederverwendbare KI-Arbeit, Prozesssicht, Use-Case-Auswahl, Nutzen/Machbarkeit, beruflicher Transfer | Use-Case-Steckbrief mit Problem, Nutzern, Prozess, Nutzen, Risiken, Erfolgskriterium |
 | M03 | 4 | Digitale Abläufe und KI-Lösungen verstehen | 41 | Datenwege, Markdown/CSV/JSON, API, Webhook, Workflow, Agent, MCP, Rechte, Kontrolle und KI-Recht im Überblick | verständliches Lösungsbild und Daten-/Kontrollfluss, begründete Einschätzung |
-| M04 | 5–6 | KI-Automatisierung mit n8n | 82 | Trigger, Nodes, Integrationen, Datenübergaben, APIs, KI, Tests, Debugging | dokumentierter und getesteter End-to-End-Workflow |
+| M04 | 5–6 | KI-Automatisierung mit n8n | 82 | Trigger, Nodes, Integrationen, Datenübergaben, APIs, KI, Tests, Debugging, RAG, Multi-Agenten-Systeme| dokumentierter und getesteter End-to-End-Workflow |
 | M05 | 7–8 | KI-Agenten mit Microsoft Copilot Studio | 82 | Agenten, Wissensquellen, Aktionen, M365/SharePoint, Connectoren, Berechtigungen, Test | funktionsfähiger, abgegrenzter Agent mit Testfällen und Betriebsgrenzen |
 | M06 | 9 | Design Thinking mit KI | 41 | Nutzerbedarf, Problemdefinition, Ideen, Persona/Nutzerreise, Prototyp, Feedback | validierter Problemrahmen und priorisierte Lösungshypothese |
 | M07 | 10 | Vibe Coding / KI-gestütztes Prototyping | 41 | Anforderungen, UI, KI-gestützte Entwicklung, Tests, iterative Verbesserung | demonstrierbarer Prototyp samt Akzeptanzkriterien |
 | M08 | 11 | KI-Strategie und Einführung | 41 | Reifegrad, Lösungswahl, Wirtschaftlichkeit, Priorisierung, Governance, KI-Verordnung, Rollout | begründeter Einführungsplan mit Risiken, Verantwortlichkeiten und Erfolgsmessung |
 | M09 | 12 | Agile Methoden in KI-Projekten | 41 | Scrum, Kanban, Lean Startup, MVP, Aufgabenplanung, Reviews, Iteration | nachvollziehbarer iterativer Projekt-/Umsetzungsplan |
 | M10 | 13 | KI-Kompetenzaufbau und Einführung im Team | 41 | Zielgruppen- und Lernbedarf, Lernformate, Begleitung, Akzeptanz, Wissenstransfer | Schulungs-/Enablement-Konzept mit Transferprüfung |
-| M11 | 14–15 | Coaching-Grundlagen für KI-Kontexte | 82 | Coaching vs. Beratung/Training, Gesprächsführung, Feedback, Zielklärung, Veränderung | erprobter Gesprächs-/Begleitprozess mit Reflexion |
-| M12 | 16 | Abschlussprojekt und Berufstransfer | 41 | Lösung/Prototyp, Strategie, verantwortlicher Betrieb, Dokumentation, Vermittlung, Präsentation | integriertes Praxisportfolio und nachvollziehbare Abschlusspräsentation |
+| M11 | 16 | Abschlussprojekt und Berufstransfer | 41 | Lösung/Prototyp, Strategie, verantwortlicher Betrieb, Dokumentation, Vermittlung, Präsentation | integriertes Praxisportfolio und nachvollziehbare Abschlusspräsentation |
+| M12 | 14–15 | Coaching-Grundlagen für KI-Kontexte | 82 | Coaching vs. Beratung/Training, Gesprächsführung, Feedback, Zielklärung, Veränderung | erprobter Gesprächs-/Begleitprozess mit Reflexion |
 
 **Grenzen:** Modulnamen, Wochen und UE sind gegenüber Änderungen gesperrte **Curriculum-Felder**. Ein Content-Agent darf diese nicht selbst verändern; er kann Änderungsanträge erzeugen. Toolbeispiele und einzelne Fallthemen sind dagegen redaktionell austauschbar. [S01–S03]
 

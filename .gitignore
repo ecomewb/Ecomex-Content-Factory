@@ -1,0 +1,14 @@
+# Zugangsdaten nie einchecken
+.env
+.env.*
+!.env.example
+
+# Office-Sperrdateien und Systemdateien
+~$*
+.DS_Store
+Thumbs.db
+
+# Lokale Arbeitsordner
+node_modules/
+__pycache__/
+jobs/*/render/
