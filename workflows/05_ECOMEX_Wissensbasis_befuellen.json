@@ -1,0 +1,1067 @@
+{
+  "name": "ECOMEX 5 | Wissensbasis befüllen",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 5 · Wissensbasis befüllen (eine Datei)\nEine Fachquelle per Formular durchsuchbar machen. Für die ganze Supabase-Ablage: **ECOMEX 10**.\n\n1. Konfiguration aus ECOMEX 0 (Renderer da?).\n2. SHA-256 der Datei → schon vorhanden? Dann Stopp.\n3. Text mit Fundstellen über **ECOMEX 7** (Renderer, n8n oder Azure).\n4. Original in die Supabase-Ablage (`Uploads/`), Quelle in `ecomex_sources`, Abschnitte in `ecomex_documents`.\n\nStatus *reference* = Agenten dürfen nutzen, ist aber keine fachliche Freigabe. *restricted* wird von den Agenten nie gefunden.\nCredentials: Supabase (in *Get many rows*, *HTTP Request*, *Create a row*, *Supabase Vector Store*), OpenAI (Embeddings).",
+        "height": 520,
+        "width": 500,
+        "color": 4
+      },
+      "id": "5d4e9a03-7ae3-5828-9ade-dad3cb8b1ce4",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "formTitle": "ECOMEX · Fachquelle in die Wissensbasis",
+        "formDescription": "Lesbar: PDF, PowerPoint, Word, Excel, CSV, Markdown/Text (PowerPoint/Word über Renderer oder Azure Document Intelligence). Ein Import ist keine fachliche Freigabe.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Titel",
+              "fieldName": "titel",
+              "requiredField": true,
+              "placeholder": "z. B. M02 Tag 11 – Prompt-Muster (Deck 2026-09)"
+            },
+            {
+              "fieldLabel": "Version",
+              "fieldName": "version",
+              "placeholder": "z. B. 2026-11 / v1"
+            },
+            {
+              "fieldLabel": "Modul / Kurs",
+              "fieldName": "modul",
+              "placeholder": "z. B. M02 oder KI-Strategie"
+            },
+            {
+              "fieldLabel": "Original-Link",
+              "fieldName": "link",
+              "placeholder": "https://… SharePoint oder GitHub (optional)"
+            },
+            {
+              "fieldLabel": "Status",
+              "fieldName": "status",
+              "fieldType": "radio",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "reference – Referenz (Agenten dürfen nutzen, keine Freigabe)"
+                  },
+                  {
+                    "option": "approved – fachlich freigegeben"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Zugriffsklasse",
+              "fieldName": "zugriff",
+              "fieldType": "radio",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "internal – intern"
+                  },
+                  {
+                    "option": "public – öffentlich"
+                  },
+                  {
+                    "option": "restricted – vertraulich (Agenten nutzen es nicht)"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Lizenz / Nutzungsrechte",
+              "fieldName": "lizenz",
+              "placeholder": "z. B. ECOMEX intern / Bitkom, frei verfügbar / Verlagsbuch – nur sinngemäß"
+            },
+            {
+              "fieldLabel": "Datei",
+              "fieldName": "datei",
+              "fieldType": "file",
+              "requiredField": true,
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf,.pptx,.docx,.xlsx,.csv,.md,.txt"
+            },
+            {
+              "fieldLabel": "Freigabe externe KI",
+              "fieldName": "freigabe",
+              "fieldType": "checkbox",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Die Datei darf für Embeddings an OpenAI übermittelt werden."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "path": "ecomex-wissensimport",
+          "buttonLabel": "Importieren",
+          "appendAttribution": false
+        }
+      },
+      "id": "c4958309-b7c4-57da-93b7-7583099dc496",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        200
+      ],
+      "notes": "Einstieg",
+      "notesInFlow": true,
+      "webhookId": "736d33ea-3465-5913-97fd-9061239aa66e"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e19ee0a6-b66b-55d1-9624-027a5bae3e2c",
+              "name": "nur_konfig",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "777511e6-06bf-55da-917d-341f4955b069",
+              "name": "source_id",
+              "value": "={{ 'ECO-KB-' + $now.toFormat('yyyyLLddHHmmss') + '-' + $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "d0bf7681-28cb-5259-8dd2-bdd516e67544",
+              "name": "titel",
+              "value": "={{ $json.titel.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "807a416a-a9fb-53a6-8de8-a86ca46f6f47",
+              "name": "version",
+              "value": "={{ $json.version || 'ohne Angabe' }}",
+              "type": "string"
+            },
+            {
+              "id": "a0170aae-ca29-54e4-acd4-8e89e1b030f8",
+              "name": "modul",
+              "value": "={{ $json.modul || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a53244e9-d383-55e6-a99b-d5c969ee798a",
+              "name": "link",
+              "value": "={{ $json.link || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "d9923aed-6255-5341-b149-00428dae437c",
+              "name": "review_status",
+              "value": "={{ String($json.status || '').startsWith('approved') ? 'approved' : 'reference' }}",
+              "type": "string"
+            },
+            {
+              "id": "22f38449-e1c6-5992-a13f-f97635de6ae9",
+              "name": "access_class",
+              "value": "={{ String($json.zugriff || 'internal').split(' ')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "966a55c4-45a2-51d9-a108-b9184e30a1e9",
+              "name": "license_note",
+              "value": "={{ $json.lizenz || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "7c786a8c-492f-529d-9188-c8b042692224",
+              "name": "dateiname",
+              "value": "={{ $binary.datei.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "343567c0-e137-5970-9a3c-e57e51410998",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        200
+      ],
+      "notes": "Angaben zur Quelle (Datei bleibt erhalten)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 0 | Regelwerk & Katalog laden"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "347e6ddd-3f3d-54cc-a28b-2439ceef86c5",
+      "name": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        80
+      ],
+      "notes": "nur Konfiguration (Renderer da?)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "d29b9b5a-b6f5-5f03-9963-97f9a4ee6ea7",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        660,
+        200
+      ],
+      "notes": "Konfiguration + Quelle + Datei",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "action": "hash",
+        "type": "SHA256",
+        "binaryData": true,
+        "binaryPropertyName": "datei",
+        "dataPropertyName": "sha256",
+        "encoding": "hex"
+      },
+      "id": "086862b5-bd0b-541b-989c-b548ef5e978b",
+      "name": "Crypto",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        880,
+        200
+      ],
+      "notes": "Prüfsumme der Datei",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "getAll",
+        "tableId": "ecomex_sources",
+        "returnAll": false,
+        "limit": 1,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "sha256",
+              "condition": "eq",
+              "keyValue": "={{ $json.sha256 }}"
+            }
+          ]
+        }
+      },
+      "id": "31ea1097-09e6-5abb-9962-ad8f4a0b3205",
+      "name": "Get many rows",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        200
+      ],
+      "notes": "schon in der Wissensbasis?\n🔑 Supabase",
+      "notesInFlow": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "89079688-c6dd-5904-8a93-34c5e5fbdf78",
+              "leftValue": "={{ !!$json.source_id }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "0a61badf-8c8b-561b-a0f7-1ea93caeacd4",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        200
+      ],
+      "notes": "Duplikat?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Schon vorhanden",
+        "completionMessage": "={{ 'Diese Datei ist bereits in der Wissensbasis: ' + $json.title + ' (' + $json.source_id + ', Status ' + $json.review_status + '). Nichts wurde doppelt angelegt.' }}",
+        "options": {}
+      },
+      "id": "038916a1-af99-5713-86d2-f6b42f87041f",
+      "name": "Form",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1540,
+        60
+      ],
+      "webhookId": "1476367f-e2e4-5747-98a6-42aa431c3870"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "chooseBranchMode": "waitForAll",
+        "output": "specifiedInput",
+        "useDataOfInput": 2
+      },
+      "id": "b1f14302-79f6-5463-bb75-43411ba1dea3",
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1540,
+        300
+      ],
+      "notes": "weiter mit Datei (Item vor Crypto – Crypto entfernt die Datei)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 7 | Text extrahieren"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "369d0dda-5c85-5060-8342-68c4125b6d20",
+      "name": "Call 'ECOMEX 7 | Text extrahieren'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1760,
+        300
+      ],
+      "notes": "Datei → Text mit Fundstellen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "503a84cf-0910-5990-95d9-06114cfe7f99",
+              "leftValue": "={{ Number($json.abschnitte_anzahl) || 0 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f2382e28-7d04-5012-980c-fbcd2608151d",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        300
+      ],
+      "notes": "Text gefunden?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Nicht importiert",
+        "completionMessage": "={{ 'Aus der Datei konnte kein Text gelesen werden. ' + ($json.hinweis || '') }}",
+        "options": {}
+      },
+      "id": "98c84d7a-d2d9-56f6-90aa-05628a126850",
+      "name": "Form1",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        2200,
+        440
+      ],
+      "webhookId": "80cf7cef-bec9-5366-bc83-bb511804dcd0"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "chooseBranchMode": "waitForAll",
+        "output": "specifiedInput",
+        "useDataOfInput": 2
+      },
+      "id": "eb9f41c4-c0df-5713-b31f-fc5feec8d20b",
+      "name": "Merge2",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2200,
+        200
+      ],
+      "notes": "Datei für die Ablage",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.konfig.supabase_url }}/storage/v1/object/{{ $json.konfig.supabase_bucket }}/Uploads/{{ $now.toFormat('yyyy-LL') }}/{{ $json.source_id }}_{{ $json.dateiname.replace(/[^A-Za-z0-9._-]+/g, '_') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 300000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "datei"
+      },
+      "id": "150688c6-be75-5b7c-a08c-b1bcbe21e851",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        200
+      ],
+      "notes": "Original in die Supabase-Ablage\n🔑 Supabase",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const q = $('Merge2').first().json;\n  const t = $(\"Call 'ECOMEX 7 | Text extrahieren'\").first().json;\n  const key = $json.Key || '';\n  const link = q.link || '';\n  return { ...q, sha256: $('Crypto').first().json.sha256, source_type: t.source_type,\n    storage_provider: key ? 'supabase_storage' : (link ? (/sharepoint/i.test(link) ? 'sharepoint' : 'external_url') : 'other'),\n    storage_uri: key ? ('supabase://' + key) : (link || ('upload://' + q.dateiname)),\n    abschnitte: (t.abschnitte || []).map(a => ({ content: a.text, locator: a.fundstelle })),\n    notiz: t.abschnitte_anzahl + ' Abschnitte, ' + t.zeichen + ' Zeichen, gelesen per ' + t.extraktion + '. ' + (t.hinweis || '') };\n})() }}",
+        "options": {}
+      },
+      "id": "dcfd565d-5219-593f-8143-777a4ba066cb",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2640,
+        200
+      ],
+      "notes": "Quelle vollständig",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "create",
+        "tableId": "ecomex_sources",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "source_id",
+              "fieldValue": "={{ $json.source_id }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.titel }}"
+            },
+            {
+              "fieldId": "source_type",
+              "fieldValue": "={{ $json.source_type }}"
+            },
+            {
+              "fieldId": "storage_provider",
+              "fieldValue": "={{ $json.storage_provider }}"
+            },
+            {
+              "fieldId": "storage_uri",
+              "fieldValue": "={{ $json.storage_uri }}"
+            },
+            {
+              "fieldId": "module_id",
+              "fieldValue": "={{ $json.modul || null }}"
+            },
+            {
+              "fieldId": "review_status",
+              "fieldValue": "={{ $json.review_status }}"
+            },
+            {
+              "fieldId": "access_class",
+              "fieldValue": "={{ $json.access_class }}"
+            },
+            {
+              "fieldId": "version_label",
+              "fieldValue": "={{ $json.version }}"
+            },
+            {
+              "fieldId": "sha256",
+              "fieldValue": "={{ $json.sha256 }}"
+            },
+            {
+              "fieldId": "license_note",
+              "fieldValue": "={{ $json.license_note || null }}"
+            },
+            {
+              "fieldId": "notes",
+              "fieldValue": "={{ $json.notiz }}"
+            }
+          ]
+        }
+      },
+      "id": "86cd65e4-67cf-5015-b4c7-26a8283538ef",
+      "name": "Create a row",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2860,
+        200
+      ],
+      "notes": "Quelle registrieren\n🔑 Supabase",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "951b40df-ecca-5bf5-8557-7f7d9bedd5cd",
+              "name": "abschnitte",
+              "value": "={{ $('Edit Fields2').first().json.abschnitte }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "97e191a5-8b49-51d7-961d-19f278421601",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3080,
+        200
+      ],
+      "notes": "Abschnitte (nach dem Registrieren)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "abschnitte",
+        "include": "noOtherFields",
+        "options": {}
+      },
+      "id": "ca7b4284-41ce-5014-8e49-c0aed8bb3bf7",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3300,
+        200
+      ],
+      "notes": "ein Item pro Folie/Seite/Abschnitt",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "ecomex_documents"
+        },
+        "options": {
+          "queryName": "ecomex_match_documents"
+        }
+      },
+      "id": "bf28704f-675f-5e8b-83d6-2b0b544a1475",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        3540,
+        200
+      ],
+      "notes": "durchsuchbar speichern\n🔑 Supabase",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.content }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "source_id",
+                "value": "={{ $('Edit Fields2').first().json.source_id }}"
+              },
+              {
+                "name": "title",
+                "value": "={{ $('Edit Fields2').first().json.titel }}"
+              },
+              {
+                "name": "locator",
+                "value": "={{ $json.locator }}"
+              },
+              {
+                "name": "source_uri",
+                "value": "={{ $('Edit Fields2').first().json.storage_uri }}"
+              },
+              {
+                "name": "version_label",
+                "value": "={{ $('Edit Fields2').first().json.version }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $('Edit Fields2').first().json.dateiname }}"
+              },
+              {
+                "name": "module_id",
+                "value": "={{ $('Edit Fields2').first().json.modul }}"
+              },
+              {
+                "name": "review_status",
+                "value": "={{ $('Edit Fields2').first().json.review_status }}"
+              },
+              {
+                "name": "access_class",
+                "value": "={{ $('Edit Fields2').first().json.access_class }}"
+              },
+              {
+                "name": "embedding_model",
+                "value": "text-embedding-3-small"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f3108bcd-04d4-5327-ae58-d883aa66f638",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        3560,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 1800,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "e479891f-3fb2-5d2f-8163-435f0711ad1a",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        3620,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "03dce11b-4e4c-5186-aac2-ae9bfe471911",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3420,
+        440
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateIndividualFields",
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "pageContent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2c66b129-1ee1-5800-954c-f8223539ca48",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3780,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Import abgeschlossen",
+        "completionMessage": "={{ $('Edit Fields2').first().json.abschnitte.length + ' Abschnitte (' + ($json.pageContent || []).length + ' Suchbausteine) aus „' + $('Edit Fields2').first().json.titel + '“ sind jetzt durchsuchbar (Quelle ' + $('Edit Fields2').first().json.source_id + ', Status ' + $('Edit Fields2').first().json.review_status + ', Ablage: ' + $('Edit Fields2').first().json.storage_uri + ').' }}",
+        "options": {}
+      },
+      "id": "064be97b-1ace-52ea-9fae-5a1613c4c0a0",
+      "name": "Form2",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        4000,
+        200
+      ],
+      "webhookId": "5313b5a0-7929-56e3-99e9-65863273d66e"
+    }
+  ],
+  "connections": {
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 0 | Regelwerk & Katalog laden'": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 7 | Text extrahieren'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 7 | Text extrahieren'": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Form1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Form2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

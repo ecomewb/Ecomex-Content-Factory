@@ -1,0 +1,8 @@
+{
+  "name": "ecomex-workflow-tests",
+  "private": true,
+  "description": "Prüft die n8n-Ausdrücke der ECOMEX-Workflows mit der n8n-Expression-Engine",
+  "scripts": { "test": "node test_workflows.js" },
+  "//": "Installation mit: npm install --ignore-scripts (keine nativen Module nötig)",
+  "dependencies": { "n8n-workflow": "^2.46.4" }
+}

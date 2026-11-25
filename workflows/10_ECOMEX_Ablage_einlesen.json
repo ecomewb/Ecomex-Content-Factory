@@ -1,0 +1,1146 @@
+{
+  "name": "ECOMEX 10 | Ablage einlesen (Supabase)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 10 · Ablage einlesen (Supabase → Wissensbasis)\nLiest alle neuen Dateien aus dem Supabase-Bucket `ecomex-sources` in die Wissensbasis ein.\n\n1. **Edit Fields** anpassen: Ordner, Status, Zugriffsklasse, max. Größe, Probelauf.\n2. Starten mit *Execute workflow* (oder nachts per *Schedule Trigger*, dafür aktivieren).\n\nDie Datenbank entscheidet, was dran ist (`ecomex_storage_inventory`): neue Dateien; PPTX/Word nur, wenn keine PDF-Fassung im selben Ordner liegt; Folienmaster und Storyboards nie. Bereits eingelesene Dateien werden übersprungen → beliebig oft wiederholbar.\n\nErgebnis: Bericht im letzten Node. Credentials: Supabase, OpenAI (Embeddings); Renderer optional.",
+        "height": 540,
+        "width": 520,
+        "color": 4
+      },
+      "id": "09e33763-d7f4-5337-97e2-e7700fe1aa31",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -140
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "474cc344-06c2-55e0-9061-d7962195606f",
+      "name": "When clicking ‘Execute workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "id": "5ea1bafc-a530-5262-a3e4-b26cefbd7d3f",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        320
+      ],
+      "notes": "nachts automatisch (bei Bedarf aktivieren)",
+      "notesInFlow": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e19ee0a6-b66b-55d1-9624-027a5bae3e2c",
+              "name": "nur_konfig",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "51ace8f2-5fa3-50a5-a5da-877ec4d2b523",
+              "name": "ordner_praefix",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "9ab65b0b-9e71-5567-b2ef-0bd37f9bf276",
+              "name": "review_status",
+              "value": "reference",
+              "type": "string"
+            },
+            {
+              "id": "9bba0a32-446b-5091-adee-fe6a68775971",
+              "name": "access_class",
+              "value": "internal",
+              "type": "string"
+            },
+            {
+              "id": "f510e91b-ff3c-55e7-8f45-c828a9bea5cd",
+              "name": "max_mb",
+              "value": 60,
+              "type": "number"
+            },
+            {
+              "id": "60d61327-9ae1-52bd-9553-23b68b823531",
+              "name": "probelauf",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "95c1a143-605a-5546-9cc0-0ae04012fb86",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        220
+      ],
+      "notes": "EINSTELLUNGEN für den Import",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 0 | Regelwerk & Katalog laden"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "43d6f5e6-e4ed-59e7-8875-8cb1160545d2",
+      "name": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        460,
+        220
+      ],
+      "notes": "Konfiguration (Renderer da?)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.konfig.supabase_url }}/rest/v1/rpc/ecomex_storage_inventory",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 60000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_bucket: $json.konfig.supabase_bucket, p_prefix: $('Edit Fields').first().json.ordner_praefix || '' }) }}"
+      },
+      "id": "685ac998-fb7d-583e-ad87-a48d4c72612c",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        220
+      ],
+      "notes": "Ablage-Inventar aus der Datenbank\n🔑 Supabase",
+      "notesInFlow": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const s = $('Edit Fields').first().json;\n  const alle = $('HTTP Request').all().map(i => i.json).filter(o => o && o.object_path);\n  const max = Number(s.max_mb || 60) * 1048576;\n  const dateien = alle.filter(o => o.empfohlen && Number(o.bytes || 0) <= max);\n  const zu_gross = alle.filter(o => o.empfohlen && Number(o.bytes || 0) > max);\n  const nicht = alle.filter(o => !o.empfohlen);\n  return { dateien, zu_gross, nicht_eingelesen: nicht, gesamt: alle.length, probelauf: s.probelauf === true || s.probelauf === 'true' };\n})() }}",
+        "options": {}
+      },
+      "id": "800097b8-c736-54ce-826e-05f628f71a22",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        900,
+        220
+      ],
+      "notes": "Auswahl + Größenlimit",
+      "notesInFlow": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "90791b1a-85a9-5a24-9283-20db76b4c907",
+              "leftValue": "={{ !$json.probelauf && $json.dateien.length > 0 }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "9623b115-bbaf-586d-b824-6f6c73442533",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        220
+      ],
+      "notes": "einlesen?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "dateien",
+        "include": "noOtherFields",
+        "options": {}
+      },
+      "id": "8b0c1e58-f84c-560b-bf23-1c3fb6bb68df",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        120
+      ],
+      "notes": "eine Datei je Item",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "8b06527b-9087-572e-abef-f58aadeee469",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1560,
+        120
+      ],
+      "notes": "Datei für Datei",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig.supabase_url }}/storage/v1/object/{{ $(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig.supabase_bucket }}/{{ $json.object_path.split('/').map(p => encodeURIComponent(p)).join('/') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "datei"
+            }
+          }
+        }
+      },
+      "id": "ce1a8b61-5825-5c31-9b0d-abac1cba6a2a",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        260
+      ],
+      "notes": "Datei aus der Ablage laden\n🔑 Supabase",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d50d877-b9d0-54dd-bbbf-9c080d33e54f",
+              "name": "dateiname",
+              "value": "={{ $('Loop Over Items').first(1).json.file_name }}",
+              "type": "string"
+            },
+            {
+              "id": "213cbfdb-15c9-58d6-a5c7-6265439b6413",
+              "name": "konfig",
+              "value": "={{ $(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bd43d9dc-8415-58c6-a843-8420411c80cf",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2020,
+        200
+      ],
+      "notes": "Kontext für die Textextraktion (Datei bleibt erhalten)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 7 | Text extrahieren"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "8d813feb-301b-59e9-8fcf-7c5aa834106c",
+      "name": "Call 'ECOMEX 7 | Text extrahieren'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2240,
+        200
+      ],
+      "notes": "Datei → Text mit Fundstellen",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const f = $('Loop Over Items').first(1).json;\n  const s = $('Edit Fields').first().json;\n  const t = $json;\n  const ordner = String(f.folder || '').split('/').filter(Boolean);\n  const stamm = String(f.file_name || '').replace(/\\.[^.]+$/, '').replace(/[_]+/g, ' ').trim();\n  const sid = f.registered_source_id || f.source_id_vorschlag;\n  return { source_id: sid, neu: !f.registered_source_id, titel: (ordner.length ? ordner[ordner.length - 1] + ' – ' : '') + stamm,\n    source_type: t.source_type || f.source_type, storage_uri: f.storage_uri, dateiname: f.file_name,\n    modul: ordner.length > 1 ? ordner[1] : (ordner[0] || ''), version: String(f.updated_at || '').slice(0, 10),\n    review_status: s.review_status, access_class: s.access_class,\n    license_note: 'Aus der Supabase-Ablage eingelesen – Lizenz/Nutzungsrechte prüfen; Fremdquellen nur sinngemäß nutzen.',\n    abschnitte: (t.abschnitte || []).map(a => ({ content: a.text, locator: a.fundstelle })),\n    notiz: (t.abschnitte_anzahl || 0) + ' Abschnitte, ' + (t.zeichen || 0) + ' Zeichen, gelesen per ' + (t.extraktion || '?') + '. ' + (t.hinweis || '') };\n})() }}",
+        "options": {}
+      },
+      "id": "f93fdf1e-0b3d-5c75-b465-bcb097cfb7c0",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2460,
+        200
+      ],
+      "notes": "Quelle + Abschnitte",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6f547033-ba6b-5509-a7c6-631167106a63",
+              "leftValue": "={{ $json.abschnitte.length }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "08a52116-c1eb-5cd0-a558-00359b6b58d3",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2680,
+        200
+      ],
+      "notes": "Text gefunden?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0b44c6ab-27dd-5777-9270-6de7bceec47b",
+              "leftValue": "={{ $json.neu }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "31fb6891-1f18-5674-a405-b468e4297e50",
+      "name": "If2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2900,
+        120
+      ],
+      "notes": "neue Quelle?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "create",
+        "tableId": "ecomex_sources",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "source_id",
+              "fieldValue": "={{ $json.source_id }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.titel }}"
+            },
+            {
+              "fieldId": "source_type",
+              "fieldValue": "={{ $json.source_type }}"
+            },
+            {
+              "fieldId": "storage_provider",
+              "fieldValue": "supabase_storage"
+            },
+            {
+              "fieldId": "storage_uri",
+              "fieldValue": "={{ $json.storage_uri }}"
+            },
+            {
+              "fieldId": "module_id",
+              "fieldValue": "={{ $json.modul || null }}"
+            },
+            {
+              "fieldId": "review_status",
+              "fieldValue": "={{ $json.review_status }}"
+            },
+            {
+              "fieldId": "access_class",
+              "fieldValue": "={{ $json.access_class }}"
+            },
+            {
+              "fieldId": "version_label",
+              "fieldValue": "={{ $json.version }}"
+            },
+            {
+              "fieldId": "license_note",
+              "fieldValue": "={{ $json.license_note }}"
+            },
+            {
+              "fieldId": "notes",
+              "fieldValue": "={{ $json.notiz }}"
+            }
+          ]
+        }
+      },
+      "id": "800cd898-e889-57c0-aa45-452f1aa85cb8",
+      "name": "Create a row",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        40
+      ],
+      "notes": "Quelle registrieren\n🔑 Supabase",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "28aab8c8-7825-557b-8aea-4d63f31cd33b",
+              "name": "abschnitte",
+              "value": "={{ $('Edit Fields3').first().json.abschnitte }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ba76fc52-1fbe-5b87-a5a3-1eb4b006dcd6",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3340,
+        120
+      ],
+      "notes": "Abschnitte",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "abschnitte",
+        "include": "noOtherFields",
+        "options": {}
+      },
+      "id": "feebfb53-453f-50c8-ad7e-812ff00ae27a",
+      "name": "Split Out1",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3560,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "ecomex_documents"
+        },
+        "options": {
+          "queryName": "ecomex_match_documents"
+        }
+      },
+      "id": "aec0de6b-e550-58b1-902e-04280202d054",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        3800,
+        120
+      ],
+      "notes": "durchsuchbar speichern\n🔑 Supabase",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.content }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "source_id",
+                "value": "={{ $('Edit Fields3').first().json.source_id }}"
+              },
+              {
+                "name": "title",
+                "value": "={{ $('Edit Fields3').first().json.titel }}"
+              },
+              {
+                "name": "locator",
+                "value": "={{ $json.locator }}"
+              },
+              {
+                "name": "source_uri",
+                "value": "={{ $('Edit Fields3').first().json.storage_uri }}"
+              },
+              {
+                "name": "version_label",
+                "value": "={{ $('Edit Fields3').first().json.version }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $('Edit Fields3').first().json.dateiname }}"
+              },
+              {
+                "name": "module_id",
+                "value": "={{ $('Edit Fields3').first().json.modul }}"
+              },
+              {
+                "name": "review_status",
+                "value": "={{ $('Edit Fields3').first().json.review_status }}"
+              },
+              {
+                "name": "access_class",
+                "value": "={{ $('Edit Fields3').first().json.access_class }}"
+              },
+              {
+                "name": "embedding_model",
+                "value": "text-embedding-3-small"
+              }
+            ]
+          }
+        }
+      },
+      "id": "0b95966f-1196-5ad3-b17e-fd655d85ff1e",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        3820,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 1800,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "165588f2-c760-51f5-bcec-3b9756f94f01",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        3880,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "f45cb770-7f70-5c7c-907c-381734ad259d",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3680,
+        360
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateIndividualFields",
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "pageContent"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b19698a9-f1f7-5d9f-bb61-01e3c7f4de24",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        4040,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b656d7e3-e5f1-5a21-be80-c3cf7ce03a25",
+              "name": "datei",
+              "value": "={{ $('Edit Fields3').first().json.dateiname }}",
+              "type": "string"
+            },
+            {
+              "id": "a546b384-03b4-57d1-b1a8-ef48f4df2ad9",
+              "name": "status",
+              "value": "eingelesen",
+              "type": "string"
+            },
+            {
+              "id": "a076e756-b16e-533c-a382-4010272593c4",
+              "name": "source_id",
+              "value": "={{ $('Edit Fields3').first().json.source_id }}",
+              "type": "string"
+            },
+            {
+              "id": "66d21e84-fb52-5a7f-9821-691025894aff",
+              "name": "chunks",
+              "value": "={{ ($json.pageContent || []).length }}",
+              "type": "number"
+            },
+            {
+              "id": "6f7d975e-1ae7-5e80-af31-0ce216a4588b",
+              "name": "hinweis",
+              "value": "={{ $('Create a row').isExecuted && $('Create a row').first().json.error ? ('Registrierung: ' + String($('Create a row').first().json.error.message || $('Create a row').first().json.error).slice(0, 120)) : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "72180bbd-4d9c-5d8e-a0ad-a06421b21a68",
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4260,
+        120
+      ],
+      "notes": "Ergebnis: eingelesen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "684256a0-9fc0-5901-b507-0b97b40bb97f",
+              "name": "datei",
+              "value": "={{ $('Loop Over Items').first(1).json.object_path }}",
+              "type": "string"
+            },
+            {
+              "id": "8b43ebfd-c58b-54f6-bfab-342f1a84d687",
+              "name": "status",
+              "value": "übersprungen",
+              "type": "string"
+            },
+            {
+              "id": "b3fba312-987e-50be-ab5e-c0abc965d868",
+              "name": "source_id",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "2622477e-3f44-5505-a012-06383ae0d40c",
+              "name": "chunks",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "b58204de-c03e-59c2-bf6e-946725c98d74",
+              "name": "hinweis",
+              "value": "={{ $json.error ? ('Download: ' + String($json.error.message || $json.error).slice(0, 160)) : ($json.notiz || $json.hinweis || 'kein Text') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "41656b0d-6655-50e8-97a3-581ec31d8fbf",
+      "name": "Edit Fields6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2900,
+        360
+      ],
+      "notes": "Ergebnis: übersprungen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig.supabase_url }}/rest/v1/rpc/ecomex_kb_status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 60000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ '{}' }}"
+      },
+      "id": "01bd1567-b89d-5d67-bfa9-5517df6fb531",
+      "name": "HTTP Request2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        460
+      ],
+      "notes": "Stand der Wissensbasis\n🔑 Supabase",
+      "notesInFlow": true,
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const a = $('Edit Fields1').first().json;\n  const erg = $('Loop Over Items').isExecuted ? $('Loop Over Items').all(0).map(i => i.json) : [];\n  const st = $('HTTP Request2').all().map(i => i.json).filter(o => o && o.review_status);\n  const L = [];\n  L.push('# Ablage einlesen · ' + $now.toFormat('dd.MM.yyyy HH:mm') + (a.probelauf ? ' · PROBELAUF (nichts geschrieben)' : ''));\n  L.push('');\n  L.push('Dateien in der Ablage: ' + a.gesamt + ' · ausgewählt: ' + a.dateien.length + ' · zu groß: ' + a.zu_gross.length + ' · nicht eingelesen: ' + a.nicht_eingelesen.length);\n  if (erg.length) {\n    L.push('');\n    L.push('## Ergebnis');\n    erg.forEach(e => L.push('- ' + (e.status === 'eingelesen' ? '✔' : '✖') + ' ' + e.datei + ' – ' + e.status + (e.chunks ? ' (' + e.chunks + ' Abschnitte, ' + e.source_id + ')' : '') + (e.hinweis ? ' · ' + e.hinweis : '')));\n  } else if (a.probelauf) {\n    L.push('');\n    L.push('## Würde eingelesen');\n    a.dateien.forEach(o => L.push('- ' + o.object_path + ' (' + (Number(o.bytes) / 1048576).toFixed(1) + ' MB) – ' + o.grund));\n  }\n  if (a.zu_gross.length) { L.push(''); L.push('## Zu groß (bitte als PDF exportieren oder max_mb erhöhen)'); a.zu_gross.forEach(o => L.push('- ' + o.object_path + ' (' + (Number(o.bytes) / 1048576).toFixed(0) + ' MB)')); }\n  if (a.nicht_eingelesen.length) { L.push(''); L.push('## Nicht eingelesen'); a.nicht_eingelesen.forEach(o => L.push('- ' + o.object_path + ' – ' + o.grund)); }\n  L.push('');\n  L.push('## Wissensbasis jetzt');\n  st.forEach(s => L.push('- ' + s.review_status + ': ' + s.quellen + ' Quellen, ' + s.chunks + ' Abschnitte' + (s.quellen_ohne_text ? ', davon ' + s.quellen_ohne_text + ' ohne Text' : '')));\n  return { bericht: L.join('\\n'), eingelesen: erg.filter(e => e.status === 'eingelesen').length, fehler: erg.filter(e => e.status !== 'eingelesen').length };\n})() }}",
+        "options": {}
+      },
+      "id": "75338b36-8376-5674-bc12-70e8d5bd13d3",
+      "name": "Edit Fields7",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2020,
+        560
+      ],
+      "notes": "BERICHT",
+      "notesInFlow": true,
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 0 | Regelwerk & Katalog laden'": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 7 | Text extrahieren'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 7 | Text extrahieren'": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

@@ -1,0 +1,59 @@
+name: Renderer bauen und testen
+
+on:
+  push:
+    paths:
+      - "renderer/**"
+      - "design/*.pptx"
+      - ".dockerignore"
+      - ".github/workflows/renderer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/ecomewb/ecomex-renderer
+
+jobs:
+  renderer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image bauen (mit ECOMEX-Master)
+        run: docker build -f renderer/Dockerfile -t renderer:test .
+
+      - name: Container starten
+        run: docker run -d --name ecomex-renderer -e RENDERER_API_KEY=ci-test renderer:test
+
+      - name: Selbsttest (Master, Katalog, PPTX, PDF, Textextraktion, Freigabe)
+        run: docker exec ecomex-renderer python tools/selbsttest.py --ausgabe /tmp/selbsttest
+
+      - name: Ergebnisse sichern
+        if: always()
+        run: |
+          mkdir -p selbsttest
+          docker cp ecomex-renderer:/tmp/selbsttest/. selbsttest/ || true
+          docker logs ecomex-renderer > selbsttest/container.log 2>&1 || true
+          docker image ls renderer:test --format "Image-Größe: {{.Size}}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renderer-selbsttest
+          path: selbsttest
+          retention-days: 14
+
+      - name: Image veröffentlichen (ghcr.io)
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          ZWEIG=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
+          docker tag renderer:test "$IMAGE:$ZWEIG"
+          docker tag renderer:test "$IMAGE:sha-${GITHUB_SHA::7}"
+          if [ "$GITHUB_REF_NAME" = "main" ]; then docker tag renderer:test "$IMAGE:latest"; fi
+          docker push --all-tags "$IMAGE"
+          echo "Veröffentlicht: $IMAGE ($ZWEIG, sha-${GITHUB_SHA::7})" >> "$GITHUB_STEP_SUMMARY"

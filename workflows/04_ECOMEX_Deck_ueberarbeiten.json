@@ -1,0 +1,901 @@
+{
+  "name": "ECOMEX 4 | Deck überarbeiten",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 4 · Deck überarbeiten\nPunktuelle Änderungen ohne Neuproduktion des ganzen Tages.\n\n**Deckdaten (.json)** aus einem Lauf von ECOMEX 2 hochladen und wählen:\n- **Block neu erzeugen** – das Agenten-Team arbeitet den Block mit deinen Hinweisen neu aus; der Rest bleibt.\n- **Nur neu rendern** – z. B. nach Änderungen in der JSON-Datei oder am Master.\n\nMit Renderer: PPTX im Originalmaster. Ohne Renderer: PPTX über ECOMEX 8 (Claude).\nAntwort: ZIP mit neuer PPTX + neuen Deckdaten.",
+        "height": 440,
+        "width": 480,
+        "color": 4
+      },
+      "id": "e3a7db23-80cc-5ae6-8d1d-1cd444818608",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "formTitle": "ECOMEX · Deck überarbeiten",
+        "formDescription": "Deckdaten (.json) eines Laufs hochladen. Ergebnis bleibt ein ENTWURF. Handänderungen aus PowerPoint sind in den Deckdaten nicht enthalten.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Deckdaten (.json)",
+              "fieldName": "deckdaten",
+              "fieldType": "file",
+              "requiredField": true,
+              "multipleFiles": false,
+              "acceptFileTypes": ".json"
+            },
+            {
+              "fieldLabel": "Aktion",
+              "fieldName": "aktion",
+              "fieldType": "radio",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Block neu erzeugen"
+                  },
+                  {
+                    "option": "Nur neu rendern"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Blocknummer (bei „Block neu erzeugen“)",
+              "fieldName": "block",
+              "fieldType": "number",
+              "placeholder": "z. B. 3"
+            },
+            {
+              "fieldLabel": "Hinweise für die Redaktion",
+              "fieldName": "hinweise",
+              "fieldType": "textarea",
+              "placeholder": "Was soll anders werden? z. B. Übung praxisnäher, Beispiel aus dem Vertrieb, kürzer …"
+            },
+            {
+              "fieldLabel": "Freigabe externe KI",
+              "fieldName": "freigabe",
+              "fieldType": "checkbox",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Die Verarbeitung mit externen KI-Diensten ist intern freigegeben."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "path": "ecomex-deck-ueberarbeiten",
+          "buttonLabel": "Starten",
+          "appendAttribution": false
+        }
+      },
+      "id": "51bcb639-7319-5ddc-b897-65daa50a0b92",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        200
+      ],
+      "notes": "Einstieg",
+      "notesInFlow": true,
+      "webhookId": "6dd2e0e2-6eed-5398-90dd-63bf015e9518"
+    },
+    {
+      "parameters": {
+        "operation": "fromJson",
+        "binaryPropertyName": "deckdaten",
+        "destinationKey": "daten",
+        "options": {}
+      },
+      "id": "6655547f-57d8-51cf-bc3e-7ef9384f827e",
+      "name": "Extract from JSON",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        220,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2238c019-86d4-5c70-8c56-c61f1694e5b6",
+              "name": "deck",
+              "value": "={{ (d => d.deck || d)(Array.isArray($json.daten) ? ($json.daten[0] || {}) : ($json.daten || {})) }}",
+              "type": "object"
+            },
+            {
+              "id": "50b2d465-b7e4-53db-82ba-43746af28201",
+              "name": "aktion",
+              "value": "={{ $('On form submission').first().json.aktion }}",
+              "type": "string"
+            },
+            {
+              "id": "f8cf8bbc-a952-58e1-9cb9-ebcf7f4bf8e1",
+              "name": "block",
+              "value": "={{ String($('On form submission').first().json.block || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "60641dc0-8429-5ba6-84a2-ca137225e4d6",
+              "name": "hinweise",
+              "value": "={{ $('On form submission').first().json.hinweise || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d53ce178-9be5-589f-9ad9-037ba8ddd4f5",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        200
+      ],
+      "notes": "Deck + Auftrag",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 0 | Regelwerk & Katalog laden"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "279928e6-dbed-5d44-877a-0e69513d2774",
+      "name": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        660,
+        200
+      ],
+      "notes": "Regeln + Katalog + Konfiguration LIVE",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a54a2ab6-3151-54ed-a8e0-273396064ccc",
+              "leftValue": "={{ $json.aktion }}",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "rightValue": "Block"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "45128885-412a-5c52-a3f6-bd46ea38ab89",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        200
+      ],
+      "notes": "Block neu erzeugen?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const d = $json.deck; const m = d.meta || {};\n  const zeilen = m.storyboard_zeilen || [];\n  const zeile = zeilen.find(z => String(z.Block) === String($json.block));\n  return {\n    gefunden: !!zeile, zeile: zeile || {}, run_id: (m.run_id || 'ECX') + '-REV', modul: m.modul, tag: m.tag, thema: m.thema,\n    zielgruppe: m.zielgruppe || 'Heterogene, berufserfahrene Erwachsene',\n    tagesuebersicht: zeilen.map(z => 'Block ' + z.Block + ' (' + z.Von + '–' + z.Bis + ', ' + z.Art + '): ' + z.Titel).join('\\n'),\n    revision: { hinweise: $json.hinweise || 'Bitte fachlich und didaktisch verbessern.', bisherige_folien: (d.folien || []).filter(f => f.block === 'Block ' + $json.block) },\n    regeln: $json.regeln, katalog: $json.katalog, konfig: $json.konfig\n  };\n})() }}",
+        "options": {}
+      },
+      "id": "e41d2493-8802-5faa-b195-72a8147403b5",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        80
+      ],
+      "notes": "Blockauftrag mit Hinweisen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7fa8f1b4-e31b-566b-994e-478dc9b23cd5",
+              "leftValue": "={{ $json.gefunden }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "3f2b376e-4614-52e6-ae18-9457e3ed9e2b",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        80
+      ],
+      "notes": "Block im Storyboard?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ 'Block ' + $('Edit Fields').first().json.block + ' ist in den Deckdaten nicht enthalten. Vorhanden: ' + (($('Edit Fields').first().json.deck.meta || {}).storyboard_zeilen || []).map(z => z.Block).join(', ') }}"
+      },
+      "id": "de197821-3c17-56b2-b56f-160367564def",
+      "name": "Stop and Error",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 3 | Block produzieren"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "f09b2b3f-484b-54d0-a1a8-206fb301ee95",
+      "name": "Call 'ECOMEX 3 | Block produzieren'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1540,
+        0
+      ],
+      "notes": "Agenten-Team arbeitet den Block neu aus",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const src = $('If').first().json;\n  const d = JSON.parse(JSON.stringify(src.deck));\n  const label = 'Block ' + src.block;\n  const idx = d.folien.findIndex(f => f.block === label);\n  const rest = d.folien.filter(f => f.block !== label);\n  const pos = idx < 0 ? rest.length : idx;\n  d.folien = [...rest.slice(0, pos), ...($json.folien || []), ...rest.slice(pos)];\n  d.meta.revisionen = [...(d.meta.revisionen || []), { block: src.block, am: $now.toISO(), hinweise: src.hinweise, qa_status: ($json.qa || {}).status }];\n  d.meta.entwurf = true;\n  return { deck: d, konfig: src.konfig, qa_block: $json.qa };\n})() }}",
+        "options": {}
+      },
+      "id": "e3a6c03e-196d-5d24-8ffe-fc7ccaa74108",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        0
+      ],
+      "notes": "neuen Block einsetzen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ce767dc-35ab-5723-9644-50f9f370c7c3",
+              "name": "deck",
+              "value": "={{ $json.deck }}",
+              "type": "object"
+            },
+            {
+              "id": "5e325c39-dc23-58b8-9873-f7ea8164fd3b",
+              "name": "konfig",
+              "value": "={{ $json.konfig }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "80b0dcbd-1fa8-5e99-8589-9741a4eecee6",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        400
+      ],
+      "notes": "Deck unverändert",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4ced5a1a-f5ac-5f78-9630-abb1160acfb7",
+              "leftValue": "={{ $json.konfig.renderer_aktiv }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "cbb7e102-cc5a-57ed-97b2-739c6791f678",
+      "name": "If2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        120
+      ],
+      "notes": "Renderer verfügbar?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.konfig.renderer_url }}/render?format=pptx",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "pptx"
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.deck) }}"
+      },
+      "id": "828b5428-5c0a-5121-9174-fca3ef28e9bf",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2220,
+        20
+      ],
+      "notes": "PPTX neu rendern\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const src = ($('Edit Fields2').isExecuted ? $('Edit Fields2') : $('Edit Fields3')).first().json;\n  const basis = $(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json;\n  return { deck: src.deck, konfig: src.konfig, design_regeln: String((basis.regeln || {})['design.md'] || ''), katalog: basis.katalog || {},\n    renderer_fehler: $json.error ? String($json.error.message || JSON.stringify($json.error)).slice(0, 300) : '' };\n})() }}",
+        "options": {}
+      },
+      "id": "7d368a81-5898-524a-af6e-08aea5360938",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2220,
+        240
+      ],
+      "notes": "Auftrag für den Weg ohne Renderer",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d5e8feb5-cd28-5f3c-8fed-9cf196438af9",
+              "leftValue": "={{ $json.konfig.pptx_ohne_renderer }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "claude"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "7441f01e-cdfd-5f7c-aa54-a8f7ee80a7de",
+      "name": "If3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2440,
+        240
+      ],
+      "notes": "PPTX über Claude erlaubt?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 8 | PPTX ohne Renderer (Claude)"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "af67bcf6-0709-5bd4-95fa-e05597e9e979",
+      "name": "Call 'ECOMEX 8 | PPTX ohne Renderer (Claude)'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2660,
+        180
+      ],
+      "notes": "PPTX mit Claude-PPTX-Skill",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "81eb5ba2-233d-545d-a320-0ac01594a41a",
+              "name": "pptx_quelle",
+              "value": "keine",
+              "type": "string"
+            },
+            {
+              "id": "69ecde4d-8f14-5cfc-999e-0c492f32a42a",
+              "name": "hinweis",
+              "value": "Keine PPTX: Renderer nicht verfügbar und PPTX über Claude ist ausgeschaltet.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "306c0e66-dba1-51b0-9b8c-c4d4012514c0",
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2660,
+        340
+      ],
+      "notes": "ohne PPTX weiter",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {},
+      "id": "98ad9748-86f6-5023-86d3-d6a4a3d92cf7",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        120
+      ],
+      "notes": "PPTX-Ergebnis (beide Wege)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "binaryPropertyName": "deck",
+        "options": {
+          "fileName": "={{ ($json.deck.meta.dateiname || 'ECOMEX_Deck') + '_Deckdaten.json' }}"
+        }
+      },
+      "id": "a50a8096-d089-5548-8884-15519b157791",
+      "name": "Convert to JSON",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        520
+      ],
+      "notes": "neue Deckdaten",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "8ca58cd2-708c-5890-be0c-35bfa425e6ce",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "compress",
+        "binaryPropertyName": "={{ Object.keys($binary || {}).join(',') }}",
+        "outputFormat": "zip",
+        "fileName": "={{ $now.toFormat('yyyyLLdd-HHmm') + '_ECOMEX_Deck_ueberarbeitet.zip' }}",
+        "binaryPropertyOutput": "data"
+      },
+      "id": "b49d3e76-d5f1-5fa3-b6a7-aa3e496306a6",
+      "name": "Compress file(s)",
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1.1,
+      "position": [
+        3320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "returnBinary",
+        "inputDataFieldName": "data",
+        "completionTitle": "Überarbeitung fertig",
+        "completionMessage": "={{ $('No Operation, do nothing').first().binary && $('No Operation, do nothing').first().binary.pptx ? 'Das ZIP enthält die neue PPTX (ENTWURF) und die aktualisierten Deckdaten.' : ('Das ZIP enthält die aktualisierten Deckdaten, aber keine PPTX: ' + ($('No Operation, do nothing').first().json.hinweis || 'unbekannter Fehler')) }}",
+        "options": {}
+      },
+      "id": "1979e91d-f1f3-5011-bcd0-7efe7dee3e99",
+      "name": "Form",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        3540,
+        300
+      ],
+      "webhookId": "ed16cab2-4484-581f-84c4-6590949580e0"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from JSON": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 0 | Regelwerk & Katalog laden'": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 3 | Block produzieren'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 3 | Block produzieren'": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 8 | PPTX ohne Renderer (Claude)'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 8 | PPTX ohne Renderer (Claude)'": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to JSON": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Compress file(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compress file(s)": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

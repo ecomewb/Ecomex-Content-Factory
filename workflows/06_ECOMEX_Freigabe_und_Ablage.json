@@ -1,0 +1,520 @@
+{
+  "name": "ECOMEX 6 | Freigabe & Ablage",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 6 · Freigabe & Ablage\nNach der menschlichen Prüfung (auch nach Bearbeitung in PowerPoint):\n\n- **Freigegeben + Renderer da** → ENTWURF-Kennzeichnung wird entfernt, Version und Prüfer:in in die Dateieigenschaften.\n- **Freigegeben, kein Renderer** → Datei kommt unverändert zurück; ENTWURF-Kennzeichnung bitte in PowerPoint löschen (Form „ECOMEX_ENTWURF“ bzw. Fußzeile).\n- **Überarbeitung nötig** → nichts wird veröffentlicht.\n\nSharePoint (*Upload file*) erst nach IT-Freigabe aktivieren.",
+        "height": 420,
+        "width": 500,
+        "color": 4
+      },
+      "id": "c76dad72-38c7-5e49-9f95-58d650d1224a",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "formTitle": "ECOMEX · Freigabe & Ablage",
+        "formDescription": "Nur geprüfte Decks freigeben. Die Freigabe wird in der Datei vermerkt.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Geprüfte PPTX",
+              "fieldName": "deck",
+              "fieldType": "file",
+              "requiredField": true,
+              "multipleFiles": false,
+              "acceptFileTypes": ".pptx"
+            },
+            {
+              "fieldLabel": "Prüfer:in",
+              "fieldName": "pruefer",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Entscheidung",
+              "fieldName": "entscheidung",
+              "fieldType": "radio",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Freigegeben – veröffentlichen"
+                  },
+                  {
+                    "option": "Überarbeitung nötig – nicht veröffentlichen"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Version",
+              "fieldName": "version",
+              "requiredField": true,
+              "placeholder": "z. B. v1_0"
+            },
+            {
+              "fieldLabel": "Kommentar",
+              "fieldName": "kommentar",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "path": "ecomex-freigabe",
+          "buttonLabel": "Absenden",
+          "appendAttribution": false
+        }
+      },
+      "id": "411f70b1-ee9d-5dc4-aa11-e64bb2b01fc1",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        200
+      ],
+      "notes": "Einstieg",
+      "notesInFlow": true,
+      "webhookId": "100e8c5d-af32-58ea-90bd-22665b875cc8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e19ee0a6-b66b-55d1-9624-027a5bae3e2c",
+              "name": "nur_konfig",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "feaafb8d-7ddf-5196-96ac-097c211f93cc",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        200
+      ],
+      "notes": "nur Konfiguration anfordern",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 0 | Regelwerk & Katalog laden"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "eeddcb4d-4cb5-531c-aa19-6c8bf9e48414",
+      "name": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        80
+      ],
+      "notes": "Renderer da?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "fe1d527c-c372-502b-b180-603e21021a3d",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        660,
+        200
+      ],
+      "notes": "Konfiguration + Datei",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "14abb52e-2b79-54e7-8c36-52cc57694529",
+              "leftValue": "={{ $json.entscheidung }}",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "rightValue": "Freigegeben"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d8bbd048-1c31-555a-b30e-3ebeabe8d9d6",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        200
+      ],
+      "notes": "freigegeben?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4ced5a1a-f5ac-5f78-9630-abb1160acfb7",
+              "leftValue": "={{ $json.konfig.renderer_aktiv }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "8f3c46a0-cad9-5777-bb24-363bf8d97e1b",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        100
+      ],
+      "notes": "Renderer verfügbar?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.konfig.renderer_url }}/finalisieren?version={{ encodeURIComponent($json.version) }}&pruefer={{ encodeURIComponent($json.pruefer) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "deck"
+            }
+          ]
+        }
+      },
+      "id": "c0df376d-df16-5724-bbb6-74b68f4f21ee",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "notes": "ENTWURF entfernen, Version setzen\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "site": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "fileName": "={{ $binary.data.fileName }}",
+        "binaryPropertyName": "data"
+      },
+      "id": "746b0431-361c-5b65-a582-098e03f31e99",
+      "name": "Upload file",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        -120
+      ],
+      "notes": "optional: SharePoint (nach IT-Freigabe aktivieren)",
+      "notesInFlow": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "returnBinary",
+        "inputDataFieldName": "data",
+        "completionTitle": "Freigegeben",
+        "completionMessage": "={{ 'Die freigegebene Fassung (' + $('On form submission').first().json.version + ', geprüft von ' + $('On form submission').first().json.pruefer + ') wird heruntergeladen – ohne ENTWURF-Kennzeichnung. Ist SharePoint aktiviert, liegt sie zusätzlich in der Bibliothek.' }}",
+        "options": {}
+      },
+      "id": "f6c5fa8d-def4-5754-8642-ab5d6d7e78c0",
+      "name": "Form",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1560,
+        40
+      ],
+      "webhookId": "147f84ce-bbee-500f-8e4d-0759894248a0"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "site": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "fileName": "={{ $binary.deck.fileName }}",
+        "binaryPropertyName": "deck"
+      },
+      "id": "aac11df5-be2f-5edd-874e-c319d1787bf9",
+      "name": "Upload file1",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ],
+      "notes": "optional: SharePoint (nach IT-Freigabe aktivieren)",
+      "notesInFlow": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "returnBinary",
+        "inputDataFieldName": "deck",
+        "completionTitle": "Freigegeben (ohne Renderer)",
+        "completionMessage": "={{ 'Die Fassung ' + $('On form submission').first().json.version + ' (geprüft von ' + $('On form submission').first().json.pruefer + ') ist als freigegeben vermerkt. Der Renderer war nicht erreichbar: Bitte die ENTWURF-Kennzeichnung in PowerPoint löschen und die Datei mit Version im Namen ablegen.' }}",
+        "options": {}
+      },
+      "id": "845ca4cf-842d-58a9-b9f5-3280df7d8267",
+      "name": "Form1",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1320,
+        340
+      ],
+      "webhookId": "f9174444-9b50-5fe0-9b68-4c574456beef"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Renderer-Fehler",
+        "completionMessage": "={{ 'Die Freigabe konnte nicht verarbeitet werden: ' + String(($json.error && ($json.error.message || $json.error)) || 'unbekannt').slice(0, 300) + '. Bitte erneut versuchen oder die ENTWURF-Kennzeichnung in PowerPoint selbst löschen.' }}",
+        "options": {}
+      },
+      "id": "edbb7688-df81-5f8a-995b-d927a903c8aa",
+      "name": "Form2",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1560,
+        200
+      ],
+      "webhookId": "8e78041f-feec-50a4-ba79-9eaabba92230"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Nicht veröffentlicht",
+        "completionMessage": "Das Deck wurde nicht veröffentlicht. Überarbeitung z. B. mit „ECOMEX 4 | Deck überarbeiten“ oder direkt in PowerPoint.",
+        "options": {}
+      },
+      "id": "3dc3a680-f5c8-5dfc-9484-4bf79ab5c55e",
+      "name": "Form3",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1100,
+        480
+      ],
+      "webhookId": "3fda89cf-65cf-53e3-9a2a-d8f1ba0e4f0a"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 0 | Regelwerk & Katalog laden'": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Form3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upload file1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Form1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Form2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

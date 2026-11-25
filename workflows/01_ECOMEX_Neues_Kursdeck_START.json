@@ -1,0 +1,1353 @@
+{
+  "name": "ECOMEX 1 | Neues Kursdeck (Start)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 1 · Neues Kursdeck\n**Der einzige Einstieg.** Formular öffnen (Produktions-URL), ausfüllen, absenden.\n\n**A** Vorhandenes Storyboard (Word/Excel/PDF) → KI strukturiert es → Vorschau.\n**B** Idee → KI entwickelt ein Storyboard → Vorschau.\n**C** Freigegebenes ECOMEX-Storyboard (Excel-Vorlage) → direkt Produktion.\n\nIn der Vorschau: *Freigeben & produzieren*, *Überarbeiten lassen* oder *Nur herunterladen*.\nJeder Tag wird parallel als eigenes Deck produziert (Workflow 2). Ergebnis: PPTX, QA-Bericht, Manuskript, Deckdaten (mit Renderer zusätzlich PDF-Vorschau).\n\nEinmalig: die drei **Call**-Nodes auf die importierten Workflows stellen; Credentials wählen.",
+        "height": 520,
+        "width": 500,
+        "color": 4
+      },
+      "id": "a7ed7894-79fb-5dd6-9b8e-21c1a7ada209",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "formTitle": "ECOMEX Content Factory · Neues Kursdeck",
+        "formDescription": "Storyboard hochladen oder Idee beschreiben. Ergebnisse sind immer ENTWÜRFE und gehen erst nach menschlicher Freigabe in den Unterricht.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Modul",
+              "fieldName": "modul",
+              "requiredField": true,
+              "placeholder": "z. B. M02 oder KI-Strategie"
+            },
+            {
+              "fieldLabel": "Tag(e) / Abschnitt",
+              "fieldName": "tage",
+              "requiredField": true,
+              "placeholder": "z. B. Tag 12 oder Tag 12–16"
+            },
+            {
+              "fieldLabel": "Kursthema",
+              "fieldName": "thema",
+              "requiredField": true,
+              "placeholder": "z. B. KI-Arbeitsabläufe testen"
+            },
+            {
+              "fieldLabel": "Zielgruppe / Vorwissen",
+              "fieldName": "zielgruppe",
+              "fieldType": "textarea",
+              "defaultValue": "Heterogene, berufserfahrene Erwachsene mit sehr unterschiedlichen IT-Vorkenntnissen"
+            },
+            {
+              "fieldLabel": "Ausgangslage",
+              "fieldName": "ausgangslage",
+              "fieldType": "radio",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "A – Vorhandenes Storyboard (Word/Excel/PDF) auswerten"
+                  },
+                  {
+                    "option": "B – Storyboard aus Idee entwickeln"
+                  },
+                  {
+                    "option": "C – Freigegebenes ECOMEX-Storyboard (Excel-Vorlage) direkt produzieren"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Storyboard-Datei (bei A und C)",
+              "fieldName": "datei",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".docx,.xlsx,.pdf,.pptx,.txt,.md"
+            },
+            {
+              "fieldLabel": "Briefing / Idee / Ergänzungen",
+              "fieldName": "briefing",
+              "fieldType": "textarea",
+              "placeholder": "Lernziele, Schwerpunkte, Fallbeispiel, was auf keinen Fall fehlen darf …"
+            },
+            {
+              "fieldLabel": "Folien pro Tag (Zielwert)",
+              "fieldName": "folien_pro_tag",
+              "fieldType": "number",
+              "defaultValue": "45"
+            },
+            {
+              "fieldLabel": "Freigabe externe KI",
+              "fieldName": "freigabe",
+              "fieldType": "checkbox",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Die Verarbeitung dieser Inhalte mit externen KI-Diensten (Anthropic, OpenAI) ist intern freigegeben."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "path": "ecomex-kursdeck",
+          "buttonLabel": "Weiter",
+          "appendAttribution": false
+        }
+      },
+      "id": "249f1231-67c3-51c7-a398-923d2f9f9ede",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        200
+      ],
+      "notes": "Einstieg: Formular",
+      "notesInFlow": true,
+      "webhookId": "1c99477e-4e92-5137-a5cd-88b58739cc31"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "606f2376-23dd-532e-b22b-b15100b0f109",
+              "name": "run_id",
+              "value": "={{ 'ECX-' + $now.toFormat('yyyyLLdd-HHmm') + '-' + $execution.id }}",
+              "type": "string"
+            },
+            {
+              "id": "7ee39060-9844-5e7b-a65b-40b7774de12d",
+              "name": "modul",
+              "value": "={{ $json.modul.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "5274f988-b4d6-5367-9f3d-d84a26bdb4e3",
+              "name": "tage",
+              "value": "={{ $json.tage.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "87bc1f95-8bfd-5345-906f-ed295370376b",
+              "name": "thema",
+              "value": "={{ $json.thema.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "ad20c882-0d4e-511c-a021-47b2dc5f0cec",
+              "name": "zielgruppe",
+              "value": "={{ $json.zielgruppe || 'Heterogene, berufserfahrene Erwachsene' }}",
+              "type": "string"
+            },
+            {
+              "id": "4159bb6f-08d6-5677-a0ab-daef77b94645",
+              "name": "modus",
+              "value": "={{ $json.ausgangslage.startsWith('C') ? 'FREIGEGEBEN' : ($json.ausgangslage.startsWith('A') ? 'STORYBOARD' : 'IDEE') }}",
+              "type": "string"
+            },
+            {
+              "id": "7c5acd36-fa28-5711-886e-91e29e3e03da",
+              "name": "folien_pro_tag",
+              "value": "={{ Math.min(70, Math.max(10, Number($json.folien_pro_tag) || 45)) }}",
+              "type": "number"
+            },
+            {
+              "id": "6325e4ce-6a5c-5da7-9da7-912dba585d24",
+              "name": "briefing",
+              "value": "={{ $json.briefing || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a86485f9-3dd1-5ec3-a38e-7fc80a84c0ea",
+              "name": "hat_datei",
+              "value": "={{ $binary.datei !== undefined }}",
+              "type": "boolean"
+            },
+            {
+              "id": "f7c1ae69-cb40-54a0-8a16-76195745375c",
+              "name": "erstellt_von",
+              "value": "={{ ($json.user && $json.user.email) || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c451123f-c3ec-5d71-829e-230b236f4985",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        200
+      ],
+      "notes": "Produktionsauftrag (Datei bleibt erhalten)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 0 | Regelwerk & Katalog laden"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "106577c8-3ff1-5ebf-9b87-4fb052f41524",
+      "name": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        80
+      ],
+      "notes": "Regeln + Katalog + Konfiguration LIVE",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "cb09505b-f08d-5f5d-abe1-3e533b9fc191",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        720,
+        200
+      ],
+      "notes": "Auftrag + Regeln + Datei",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bd4810f1-6738-5cd7-8d54-38dae9ff85e9",
+              "leftValue": "={{ $json.modus }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "FREIGEGEBEN"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "0f7b03cf-95c4-5317-a94e-203cdbaa8290",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        200
+      ],
+      "notes": "C: freigegebenes Excel?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "datei",
+        "options": {}
+      },
+      "id": "c458cb26-7662-5899-b850-9476e8f644d0",
+      "name": "Extract from XLSX",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        -40
+      ],
+      "notes": "Excel-Storyboard lesen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "alle_zeilen",
+        "options": {}
+      },
+      "id": "7193ebc6-f34d-5869-a9f4-f70f0a124a03",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bf0928a4-ce3c-5727-be4f-3864afa5f5ad",
+              "name": "zeilen",
+              "value": "={{ $json.alle_zeilen.filter(z => /freigegeben/i.test(String(z.Status || ''))) }}",
+              "type": "array"
+            },
+            {
+              "id": "a97eecea-2fdc-50b4-87ec-2c5db7a62726",
+              "name": "storyboard_titel",
+              "value": "={{ $('Merge').first().json.thema }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1bed3641-6f34-5ef3-9bb3-6c0be5588e87",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1620,
+        -40
+      ],
+      "notes": "nur Status 'Freigegeben'",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f56da5e9-28c3-5615-a979-ffdc747bc9b0",
+              "leftValue": "={{ $json.zeilen.length }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d8bd9c55-72a4-5099-8a36-9cfe277cdd43",
+      "name": "If2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        -40
+      ],
+      "notes": "freigegebene Zeilen vorhanden?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "errorMessage": "Im Excel-Storyboard gibt es keine Zeile mit Status 'Freigegeben'. Bitte Vorlage prüfen (Spaltennamen nicht ändern)."
+      },
+      "id": "81b6c2ab-1863-58e8-9bc6-f2c6a1853f3e",
+      "name": "Stop and Error",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3a7f87b8-8b86-5a19-be4d-27b3a4a5b800",
+              "leftValue": "={{ $json.hat_datei }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d67227a7-baa6-58b9-950f-630f2a7f5da2",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        420
+      ],
+      "notes": "Datei hochgeladen?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 7 | Text extrahieren"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "cc2f32f1-2c0f-515b-8ac2-baf0ecbfd4da",
+      "name": "Call 'ECOMEX 7 | Text extrahieren'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1400,
+        340
+      ],
+      "notes": "Datei → Text mit Fundstellen (Renderer oder n8n)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=AUFTRAG\nModul: {{ $('Merge').first().json.modul }}\nTag(e) / Abschnitt: {{ $('Merge').first().json.tage }}\nKursthema: {{ $('Merge').first().json.thema }}\nZielgruppe: {{ $('Merge').first().json.zielgruppe }}\nModus: {{ $('Merge').first().json.modus }}\nFolien pro Tag (Zielwert): {{ $('Merge').first().json.folien_pro_tag }}\n\nBRIEFING / ERGÄNZUNGEN\n{{ $('Merge').first().json.briefing || '(kein Briefing)' }}\n\nVORLAGE (aus Datei extrahiert, mit Fundstellen)\n{{ $(\"Call 'ECOMEX 7 | Text extrahieren'\").isExecuted ? (String($(\"Call 'ECOMEX 7 | Text extrahieren'\").first().json.text || '').slice(0, 150000) || ('(Datei konnte nicht gelesen werden: ' + ($(\"Call 'ECOMEX 7 | Text extrahieren'\").first().json.hinweis || 'unbekannt') + ' – es gilt das Briefing)')) : '(keine Datei – es gilt das Briefing)' }}\n\nErzeuge jetzt das Storyboard.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "=Du bist die Curriculum- und Storyboard-Redaktion der ECOMEX Business Academy (berufliche Weiterbildung zu KI-Themen; heterogene, berufserfahrene Erwachsene mit sehr unterschiedlichen IT-Vorkenntnissen; Unterricht in Präsenz/Live-Online).\n\nDEINE AUFGABE\nAus einer Vorlage (Word/Excel/PDF-Storyboard) oder einer Idee entsteht ein prüfbares Produktions-Storyboard: eine Zeile pro Lerneinheit (\"Block\"). Daraus werden später automatisch die Folien produziert. Ein Mensch prüft und gibt frei.\n\nVERBINDLICHE REGELN\n1. Modus STORYBOARD (Vorlage vorhanden): Die Vorlage ist redaktionelle Vorgabe. Übernimm Tage, Reihenfolge, Zeiten, Themen, Übungen, vorhandenes Material und die Formulierung der Lernziele. Nichts umstrukturieren, nichts weglassen, nichts \"optimieren\". Fehlt etwas Nötiges (Zeit, Lernziel, Übungsform), ergänzt du es knapp und schreibst in Offene_Fragen: \"ERGÄNZT: …\".\n2. Modus IDEE: Entwickle einen begründeten Vorschlag mit nachvollziehbarer Lernreise. Jede Annahme gehört in \"annahmen\".\n3. Zeitraster: Mo–Do 09:00–15:00, Fr 09:00–13:00. Blöcke in 15-/30-/45-/60-Minuten-Schritten (längere Übungen max. 75 Min.). Pausen als eigene Zeile mit Art \"pause\": Vormittag 15 Min., Mittag 45 Min. (Fr nur Vormittagspause). Der Tag wird nie verlängert.\n4. Didaktik: problemorientierte Lernreise aus beruflichen Situationen; Praxis vor Technikshow; konkrete KI-Werkzeugpraxis ohne Setup-Hürden; Theorie bereitet Praxis vor; jede Übung mit Basis- und Vertiefungspfad; Tagesabschluss mit Reflexion/Transfer; Wiederholungen zwischen Blöcken vermeiden.\n5. Folien: Spalte \"Folien\" = Zielanzahl pro Block. Summe pro Tag ≈ Vorgabe \"Folien pro Tag\" (±10 %). Richtwerte: 60 Min. Input ≈ 8–10 Folien; Übung ≈ 4–6 Folien (Kapitel, Auftrag, Material, Lösung, Reflexion); Pause = 1.\n6. Lernziele handlungsorientiert (\"Die TN können …\"), mehrere mit \";\" trennen. Inhalte ebenfalls mit \";\" trennen.\n7. Fundstellen: Woher stammt die Zeile? (z. B. \"Word, Abschnitt 3\", \"Excel, Zeile 7\") oder \"Vorschlag\".\n8. Keine erfundenen Werkzeugfunktionen, Studien, Zahlen oder Quellen. Werkzeuge nur nennen, wenn sie im Kurs plausibel verfügbar sind.\n9. Art ist genau einer dieser Werte: input, uebung, pause, reflexion. Tag-Bezeichnungen einheitlich (z. B. \"Tag 12\" oder \"Mo\").\n\nECOMEX-REGELWERK (aktuell aus GitHub geladen – hat Vorrang vor allgemeinen Gewohnheiten)\n### curriculum.md\n{{ String(($('Merge').first().json.regeln || {})['curriculum.md'] || '(Regeldatei curriculum.md nicht gefunden)').slice(0, 60000) }}\n### didaktik.md\n{{ String(($('Merge').first().json.regeln || {})['didaktik.md'] || '(Regeldatei didaktik.md nicht gefunden)').slice(0, 60000) }}\n### content_workflow.md\n{{ String(($('Merge').first().json.regeln || {})['content_workflow.md'] || '(Regeldatei content_workflow.md nicht gefunden)').slice(0, 30000) }}"
+            }
+          ]
+        }
+      },
+      "id": "ea89c9d1-6e80-5d6c-b16c-ac8986ecfdfb",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1660,
+        440
+      ],
+      "notes": "Storyboard-Redaktion (Claude)",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-opus-5-5",
+          "cachedResultName": "Claude Opus 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 32000,
+          "thinkingMode": "adaptive",
+          "effort": "high",
+          "streaming": true,
+          "promptCaching": "5m"
+        }
+      },
+      "id": "49b5aa4a-8678-5960-8803-37fa5b82a1b2",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        1600,
+        680
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"titel\": {\n   \"type\": \"string\",\n   \"description\": \"Titel des Storyboards / der Kurswoche\"\n  },\n  \"zusammenfassung\": {\n   \"type\": \"string\",\n   \"description\": \"2–3 Sätze: die Lernreise\"\n  },\n  \"annahmen\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"offene_fragen\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"bloecke\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"Tag\": {\n      \"type\": \"string\"\n     },\n     \"Datum\": {\n      \"type\": \"string\"\n     },\n     \"Block\": {\n      \"type\": \"integer\"\n     },\n     \"Von\": {\n      \"type\": \"string\",\n      \"description\": \"HH:MM\"\n     },\n     \"Bis\": {\n      \"type\": \"string\",\n      \"description\": \"HH:MM\"\n     },\n     \"Titel\": {\n      \"type\": \"string\"\n     },\n     \"Art\": {\n      \"type\": \"string\",\n      \"description\": \"input | uebung | pause | reflexion\"\n     },\n     \"Lernziele\": {\n      \"type\": \"string\"\n     },\n     \"Inhalte\": {\n      \"type\": \"string\"\n     },\n     \"Methode\": {\n      \"type\": \"string\"\n     },\n     \"Material\": {\n      \"type\": \"string\"\n     },\n     \"Folien\": {\n      \"type\": \"integer\"\n     },\n     \"Quellen\": {\n      \"type\": \"string\"\n     },\n     \"Hinweise\": {\n      \"type\": \"string\"\n     },\n     \"Fundstellen\": {\n      \"type\": \"string\"\n     },\n     \"Offene_Fragen\": {\n      \"type\": \"string\"\n     }\n    },\n    \"required\": [\n     \"Tag\",\n     \"Block\",\n     \"Von\",\n     \"Bis\",\n     \"Titel\",\n     \"Art\",\n     \"Folien\"\n    ]\n   }\n  }\n },\n \"required\": [\n  \"titel\",\n  \"bloecke\"\n ]\n}"
+      },
+      "id": "33885cf2-875b-5cb4-9e2f-5ed2390db840",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1800,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const sb = $json.output;\n  const e = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);\n  const tage = [...new Set(sb.bloecke.map(b => String(b.Tag)))];\n  let h = '<h2>' + e(sb.titel) + '</h2><p>' + e(sb.zusammenfassung) + '</p>';\n  tage.forEach(t => {\n    const bl = sb.bloecke.filter(b => String(b.Tag) === t);\n    const sum = bl.reduce((a, b) => a + (Number(b.Folien) || 0), 0);\n    h += '<h3>' + e(t) + ' · ' + bl.length + ' Blöcke · ' + sum + ' Folien</h3><table><tr><th>Zeit</th><th>Lerneinheit</th><th>Art</th><th>Folien</th></tr>';\n    bl.forEach(b => {\n      h += '<tr><td>' + e(b.Von) + '–' + e(b.Bis) + '</td><td><b>' + e(b.Titel) + '</b><br><small>' + e(b.Lernziele) + '</small>'\n        + (b.Offene_Fragen ? '<br><small>⚠ ' + e(b.Offene_Fragen) + '</small>' : '') + '</td><td>' + e(b.Art) + '</td><td>' + e(b.Folien) + '</td></tr>';\n    });\n    h += '</table>';\n  });\n  if ((sb.annahmen || []).length) h += '<h3>Annahmen der KI</h3><ul>' + sb.annahmen.map(a => '<li>' + e(a) + '</li>').join('') + '</ul>';\n  if ((sb.offene_fragen || []).length) h += '<h3>Offene Fragen</h3><ul>' + sb.offene_fragen.map(a => '<li>' + e(a) + '</li>').join('') + '</ul>';\n  return { storyboard: sb, vorschau_html: h };\n})() }}",
+        "options": {}
+      },
+      "id": "972ad849-ff86-5e4c-94a6-976ce38c7044",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2000,
+        440
+      ],
+      "notes": "Vorschau aufbereiten",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "page",
+        "defineForm": "fields",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Vorschau",
+              "fieldType": "html",
+              "html": "={{ $json.vorschau_html }}"
+            },
+            {
+              "fieldLabel": "Entscheidung",
+              "fieldName": "entscheidung",
+              "fieldType": "radio",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Freigeben und Produktion starten"
+                  },
+                  {
+                    "option": "Überarbeiten lassen (Hinweise unten)"
+                  },
+                  {
+                    "option": "Nur als Excel herunterladen (ich bearbeite selbst und starte später mit C)"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Änderungswünsche",
+              "fieldName": "aenderungen",
+              "fieldType": "textarea",
+              "placeholder": "z. B. Block 3 kürzer, Übung zu Datenschutz ergänzen, Freitag endet 13:00 …"
+            }
+          ]
+        },
+        "options": {
+          "formTitle": "Storyboard prüfen",
+          "buttonLabel": "Weiter",
+          "formDescription": "Bitte prüfen. Erst nach Freigabe werden Folien produziert."
+        }
+      },
+      "id": "7413aa3e-d0ac-52ec-8cc9-f3dfb07616bf",
+      "name": "Form",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        2240,
+        440
+      ],
+      "notes": "Mensch prüft Storyboard",
+      "notesInFlow": true,
+      "webhookId": "03548a83-8d3a-5378-b37e-cc864299a3d8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "adff866b-b590-5444-8e3e-9191d7b76f88",
+              "leftValue": "={{ $json.entscheidung }}",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "rightValue": "Überarbeiten"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f75e26be-8535-57b6-8a98-45c7e175f5bf",
+      "name": "If3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2460,
+        440
+      ],
+      "notes": "überarbeiten?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Überarbeite das folgende Storyboard ausschließlich gemäß den Änderungswünschen der Redaktion. Alles andere bleibt unverändert (gleiche Struktur, gleiche Felder).\n\nÄNDERUNGSWÜNSCHE\n{{ $json.aenderungen }}\n\nAKTUELLES STORYBOARD\n{{ JSON.stringify($('Edit Fields2').last().json.storyboard) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "=Du bist die Curriculum- und Storyboard-Redaktion der ECOMEX Business Academy (berufliche Weiterbildung zu KI-Themen; heterogene, berufserfahrene Erwachsene mit sehr unterschiedlichen IT-Vorkenntnissen; Unterricht in Präsenz/Live-Online).\n\nDEINE AUFGABE\nAus einer Vorlage (Word/Excel/PDF-Storyboard) oder einer Idee entsteht ein prüfbares Produktions-Storyboard: eine Zeile pro Lerneinheit (\"Block\"). Daraus werden später automatisch die Folien produziert. Ein Mensch prüft und gibt frei.\n\nVERBINDLICHE REGELN\n1. Modus STORYBOARD (Vorlage vorhanden): Die Vorlage ist redaktionelle Vorgabe. Übernimm Tage, Reihenfolge, Zeiten, Themen, Übungen, vorhandenes Material und die Formulierung der Lernziele. Nichts umstrukturieren, nichts weglassen, nichts \"optimieren\". Fehlt etwas Nötiges (Zeit, Lernziel, Übungsform), ergänzt du es knapp und schreibst in Offene_Fragen: \"ERGÄNZT: …\".\n2. Modus IDEE: Entwickle einen begründeten Vorschlag mit nachvollziehbarer Lernreise. Jede Annahme gehört in \"annahmen\".\n3. Zeitraster: Mo–Do 09:00–15:00, Fr 09:00–13:00. Blöcke in 15-/30-/45-/60-Minuten-Schritten (längere Übungen max. 75 Min.). Pausen als eigene Zeile mit Art \"pause\": Vormittag 15 Min., Mittag 45 Min. (Fr nur Vormittagspause). Der Tag wird nie verlängert.\n4. Didaktik: problemorientierte Lernreise aus beruflichen Situationen; Praxis vor Technikshow; konkrete KI-Werkzeugpraxis ohne Setup-Hürden; Theorie bereitet Praxis vor; jede Übung mit Basis- und Vertiefungspfad; Tagesabschluss mit Reflexion/Transfer; Wiederholungen zwischen Blöcken vermeiden.\n5. Folien: Spalte \"Folien\" = Zielanzahl pro Block. Summe pro Tag ≈ Vorgabe \"Folien pro Tag\" (±10 %). Richtwerte: 60 Min. Input ≈ 8–10 Folien; Übung ≈ 4–6 Folien (Kapitel, Auftrag, Material, Lösung, Reflexion); Pause = 1.\n6. Lernziele handlungsorientiert (\"Die TN können …\"), mehrere mit \";\" trennen. Inhalte ebenfalls mit \";\" trennen.\n7. Fundstellen: Woher stammt die Zeile? (z. B. \"Word, Abschnitt 3\", \"Excel, Zeile 7\") oder \"Vorschlag\".\n8. Keine erfundenen Werkzeugfunktionen, Studien, Zahlen oder Quellen. Werkzeuge nur nennen, wenn sie im Kurs plausibel verfügbar sind.\n9. Art ist genau einer dieser Werte: input, uebung, pause, reflexion. Tag-Bezeichnungen einheitlich (z. B. \"Tag 12\" oder \"Mo\").\n\nECOMEX-REGELWERK (aktuell aus GitHub geladen – hat Vorrang vor allgemeinen Gewohnheiten)\n### curriculum.md\n{{ String(($('Merge').first().json.regeln || {})['curriculum.md'] || '(Regeldatei curriculum.md nicht gefunden)').slice(0, 60000) }}\n### didaktik.md\n{{ String(($('Merge').first().json.regeln || {})['didaktik.md'] || '(Regeldatei didaktik.md nicht gefunden)').slice(0, 60000) }}\n### content_workflow.md\n{{ String(($('Merge').first().json.regeln || {})['content_workflow.md'] || '(Regeldatei content_workflow.md nicht gefunden)').slice(0, 30000) }}"
+            }
+          ]
+        }
+      },
+      "id": "c5ffab74-48b9-5879-9587-aec5ecbe603b",
+      "name": "Basic LLM Chain1",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2700,
+        640
+      ],
+      "notes": "Storyboard überarbeiten",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-opus-5-5",
+          "cachedResultName": "Claude Opus 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 32000,
+          "thinkingMode": "adaptive",
+          "effort": "medium",
+          "streaming": true,
+          "promptCaching": "5m"
+        }
+      },
+      "id": "c593ef96-39e3-577d-a237-35e63eb9e84c",
+      "name": "Anthropic Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        2640,
+        880
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"titel\": {\n   \"type\": \"string\",\n   \"description\": \"Titel des Storyboards / der Kurswoche\"\n  },\n  \"zusammenfassung\": {\n   \"type\": \"string\",\n   \"description\": \"2–3 Sätze: die Lernreise\"\n  },\n  \"annahmen\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"offene_fragen\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"bloecke\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"Tag\": {\n      \"type\": \"string\"\n     },\n     \"Datum\": {\n      \"type\": \"string\"\n     },\n     \"Block\": {\n      \"type\": \"integer\"\n     },\n     \"Von\": {\n      \"type\": \"string\",\n      \"description\": \"HH:MM\"\n     },\n     \"Bis\": {\n      \"type\": \"string\",\n      \"description\": \"HH:MM\"\n     },\n     \"Titel\": {\n      \"type\": \"string\"\n     },\n     \"Art\": {\n      \"type\": \"string\",\n      \"description\": \"input | uebung | pause | reflexion\"\n     },\n     \"Lernziele\": {\n      \"type\": \"string\"\n     },\n     \"Inhalte\": {\n      \"type\": \"string\"\n     },\n     \"Methode\": {\n      \"type\": \"string\"\n     },\n     \"Material\": {\n      \"type\": \"string\"\n     },\n     \"Folien\": {\n      \"type\": \"integer\"\n     },\n     \"Quellen\": {\n      \"type\": \"string\"\n     },\n     \"Hinweise\": {\n      \"type\": \"string\"\n     },\n     \"Fundstellen\": {\n      \"type\": \"string\"\n     },\n     \"Offene_Fragen\": {\n      \"type\": \"string\"\n     }\n    },\n    \"required\": [\n     \"Tag\",\n     \"Block\",\n     \"Von\",\n     \"Bis\",\n     \"Titel\",\n     \"Art\",\n     \"Folien\"\n    ]\n   }\n  }\n },\n \"required\": [\n  \"titel\",\n  \"bloecke\"\n ]\n}"
+      },
+      "id": "46e5283e-ec6e-519a-9a74-93b513e360c6",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2800,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ce51b66f-c972-5a5e-a96a-c0b1de5e7cc8",
+              "leftValue": "={{ $json.entscheidung }}",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "rightValue": "Freigeben"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f41d735a-3b4f-5e3a-9f45-a749417bdc9a",
+      "name": "If4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2700,
+        340
+      ],
+      "notes": "freigeben & produzieren?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "924391b7-f8c3-534e-883f-0bc160bd7fbb",
+              "name": "zeilen",
+              "value": "={{ $('Edit Fields2').last().json.storyboard.bloecke }}",
+              "type": "array"
+            },
+            {
+              "id": "46739eb7-3d47-587c-9d7d-895dec459c71",
+              "name": "storyboard_titel",
+              "value": "={{ $('Edit Fields2').last().json.storyboard.titel }}",
+              "type": "string"
+            },
+            {
+              "id": "4feceb0f-3883-503c-9977-1043bcca52b8",
+              "name": "freigabe_kommentar",
+              "value": "={{ $json.aenderungen || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "82b29d2b-5e69-57dd-b1f3-ddd781086abc",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2940,
+        240
+      ],
+      "notes": "freigegebenes Storyboard",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const job = $('Merge').first().json;\n  const zeilen = $json.zeilen.map(z => ({ ...z, Status: 'Freigegeben' }));\n  const tage = [...new Set(zeilen.map(z => String(z.Tag).trim()))];\n  return {\n    zeilen,\n    tage: tage.map(t => ({\n      run_id: job.run_id, modul: job.modul, thema: job.thema, zielgruppe: job.zielgruppe,\n      folien_pro_tag: job.folien_pro_tag, storyboard_titel: $json.storyboard_titel || job.thema, erstellt_von: job.erstellt_von,\n      tag: t, zeilen: zeilen.filter(z => String(z.Tag).trim() === t),\n      regeln: job.regeln, regel_versionen: job.regel_versionen, katalog: job.katalog, konfig: job.konfig\n    }))\n  };\n})() }}",
+        "options": {}
+      },
+      "id": "0053b8c8-710c-5710-8295-f0f5c9280b82",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3180,
+        0
+      ],
+      "notes": "ein Auftrag pro Tag",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "tage",
+        "include": "noOtherFields",
+        "options": {}
+      },
+      "id": "2fecc83a-5939-560b-839b-419ed1c8546e",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        3400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 2 | Tag produzieren"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "13fda1a6-f0a8-5996-90c5-09a4283c5614",
+      "name": "Call 'ECOMEX 2 | Tag produzieren'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        3620,
+        0
+      ],
+      "notes": "Tage parallel produzieren (läuft im Hintergrund)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateIndividualFields",
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "tag"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "240f19f8-e4e5-58a2-8dee-066ace4a74d1",
+      "name": "Aggregate1",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3840,
+        0
+      ],
+      "notes": "gestartete Tage",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const prod = $('Edit Fields4').isExecuted;\n  const zeilen = prod ? $('Edit Fields4').first().json.zeilen : $('Edit Fields2').last().json.storyboard.bloecke;\n  const status = prod ? 'Freigegeben' : 'Entwurf';\n  return { zeilen: zeilen.map(z => ({ Tag: z.Tag || '', Datum: z.Datum || '', Block: z.Block, Von: z.Von, Bis: z.Bis, Titel: z.Titel,\n    Art: z.Art, Lernziele: z.Lernziele || '', Inhalte: z.Inhalte || '', Methode: z.Methode || '', Material: z.Material || '',\n    Folien: z.Folien, Quellen: z.Quellen || '', Hinweise: z.Hinweise || '', Fundstellen: z.Fundstellen || '', Status: status,\n    Offene_Fragen: z.Offene_Fragen || '' })) };\n})() }}",
+        "options": {}
+      },
+      "id": "16a90996-1ab1-5028-9829-03a5e168026b",
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4060,
+        240
+      ],
+      "notes": "Excel-Zeilen (Vorlagenformat)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "zeilen",
+        "include": "noOtherFields",
+        "options": {}
+      },
+      "id": "1c153b77-82ae-540a-8e18-c909c4803d91",
+      "name": "Split Out1",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        4280,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ 'ECOMEX_Storyboard_' + $('Merge').first().json.modul + '_' + $('Merge').first().json.tage.replace(/[^A-Za-z0-9]+/g, '_') + '.xlsx' }}",
+          "sheetName": "Storyboard",
+          "headerRow": true
+        }
+      },
+      "id": "0e283b82-9166-56b8-89b0-703ed1003f64",
+      "name": "Convert to XLSX",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        4500,
+        240
+      ],
+      "notes": "Storyboard als Excel",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "returnBinary",
+        "inputDataFieldName": "data",
+        "completionTitle": "={{ $('Edit Fields4').isExecuted ? 'Produktion gestartet' : 'Storyboard bereit' }}",
+        "completionMessage": "={{ $('Edit Fields4').isExecuted ? ('Die Produktion läuft im Hintergrund für: ' + $('Edit Fields4').first().json.tage.map(t => t.tag).join(', ') + '. Pro Tag entstehen PPTX (mit Renderer zusätzlich PDF-Vorschau), QA-Bericht, Folien-Manuskript und Deckdaten (n8n-Ausführungen von „ECOMEX 2“ bzw. SharePoint). Dauer je Tag ca. 30–60 Minuten. Run-ID: ' + $('Merge').first().json.run_id) : 'Das Storyboard wird heruntergeladen. Bearbeiten, Status auf „Freigegeben“ setzen und mit Ausgangslage C starten.' }}",
+        "options": {}
+      },
+      "id": "ab4dc5ca-06b0-5557-9e64-000e4cc36492",
+      "name": "Form1",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        4720,
+        240
+      ],
+      "notes": "Excel herunterladen + Status",
+      "notesInFlow": true,
+      "webhookId": "142f7c16-32fa-54f9-b1b4-41ae948a8fb7"
+    },
+    {
+      "parameters": {
+        "content": "### Pfad C\nFreigegebenes Excel (Vorlage) → nur Zeilen mit Status *Freigegeben*.",
+        "height": 150,
+        "width": 900,
+        "color": 5
+      },
+      "id": "c08d6870-612f-5cee-bc8d-44f9079b82d8",
+      "name": "Sticky Note c",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Pfad A / B\nDatei → Text mit Fundstellen (**ECOMEX 7**: Renderer oder n8n) → Storyboard-Redaktion (Claude Opus) → Vorschau → Entscheidung. „Überarbeiten“ läuft so oft wie nötig.",
+        "height": 140,
+        "width": 1780,
+        "color": 5
+      },
+      "id": "498835f8-4d4a-58fb-8bbf-58d9538b574c",
+      "name": "Sticky Note ab",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Produktion\nPro Tag ein Auftrag an **ECOMEX 2** – parallel, im Hintergrund. Das Formular antwortet sofort mit dem Storyboard als Excel.",
+        "height": 150,
+        "width": 1780,
+        "color": 6
+      },
+      "id": "1ddfc839-5d77-5741-bede-d6c8eaeff8c4",
+      "name": "Sticky Note prod",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3160,
+        -200
+      ]
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 0 | Regelwerk & Katalog laden'": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract from XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from XLSX": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 7 | Text extrahieren'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 7 | Text extrahieren'": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 2 | Tag produzieren'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 2 | Tag produzieren'": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Convert to XLSX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to XLSX": {
+      "main": [
+        [
+          {
+            "node": "Form1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

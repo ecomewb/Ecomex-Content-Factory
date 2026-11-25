@@ -1,0 +1,1405 @@
+{
+  "name": "ECOMEX 7 | Text extrahieren",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 7 · Text extrahieren\nWird von ECOMEX 1, 5, 10 und 11 aufgerufen. Erwartet die Datei im Binärfeld **datei** und `konfig` aus ECOMEX 0.\n\nReihenfolge – automatisch:\n1. **Renderer** (`/extract`): PPTX inkl. Sprechernotizen, Word, Excel, PDF, Markdown.\n2. **n8n**: PDF (je Seite), Excel/CSV (je 25 Zeilen), Markdown/Text (je Abschnitt).\n3. **Azure Document Intelligence**: PowerPoint, Word, Bilder und gescannte PDFs – nur wenn in ECOMEX 0 `azure_di_endpoint` gesetzt ist.\n\nFällt der Renderer aus, geht es mit 2/3 weiter. Ergebnis immer gleich: `abschnitte[{fundstelle,text}]`, `text`, `zeichen`, `source_type`, `hinweis`.",
+        "height": 520,
+        "width": 540,
+        "color": 4
+      },
+      "id": "f37b3c87-a65f-5c84-8296-8c1bc503d7f5",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "97a38bac-9fb3-50bc-bdd1-95e2f458d2fe",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "965d256b-7302-5769-831c-ddf2c0608526",
+              "name": "dateiname",
+              "value": "={{ $json.dateiname || ($binary.datei && $binary.datei.fileName) || 'datei' }}",
+              "type": "string"
+            },
+            {
+              "id": "2208d7fc-3372-5442-917e-22d0b992d3db",
+              "name": "endung",
+              "value": "={{ String($json.dateiname || ($binary.datei && $binary.datei.fileName) || '').split('.').pop().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "dfbf188b-9dcd-55bc-81a6-1c6b4318126a",
+              "name": "renderer_aktiv",
+              "value": "={{ !!($json.konfig && $json.konfig.renderer_aktiv) }}",
+              "type": "boolean"
+            },
+            {
+              "id": "f48b9666-ddd0-5bdb-b82b-9985fdf55ff9",
+              "name": "azure_aktiv",
+              "value": "={{ !!($json.konfig && $json.konfig.azure_aktiv) }}",
+              "type": "boolean"
+            },
+            {
+              "id": "c7c93e1b-3edf-5f14-b38a-5429c8554842",
+              "name": "konfig",
+              "value": "={{ $json.konfig || {} }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "dbe53814-deeb-5aed-aa67-3de55577ad2b",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "Dateityp + Weg bestimmen (Datei bleibt erhalten)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f680dabe-1a89-5c3a-876d-7f2b92f12e60",
+              "leftValue": "={{ $json.renderer_aktiv }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "75ec9ed8-104b-5a47-97de-5baa31ac3d6f",
+              "leftValue": "={{ ['pdf','pptx','docx','xlsx','md','txt','csv'].includes($json.endung) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "428f4f9e-29ff-5dcc-a166-0664575d0975",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "notes": "Renderer nutzen?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.konfig.renderer_url }}/extract",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 300000
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "datei"
+            }
+          ]
+        }
+      },
+      "id": "f16dec3c-6a94-54a1-a771-6effef658b88",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        120
+      ],
+      "notes": "1 · Renderer liest die Datei\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cdcb3509-6398-54cd-a530-090e6121352a",
+              "name": "abschnitte",
+              "value": "={{ $json.abschnitte || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "5a44565e-77ae-571a-9775-77acf968ddf7",
+              "name": "hinweis",
+              "value": "={{ $json.hinweis || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "6c25e3ac-d1c2-599b-ade2-2f6795e87938",
+              "name": "extraktion",
+              "value": "renderer",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b79081f8-077c-541c-912d-5305b64d9eda",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        920,
+        40
+      ],
+      "notes": "Ergebnis (Renderer)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d59580d9-299d-5745-9782-53dffda76612",
+              "name": "renderer_fehler",
+              "value": "={{ 'Renderer-Fehler: ' + String(($json.error && ($json.error.message || $json.error.description)) || $json.error || 'unbekannt').slice(0, 200) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1cedb19-f0e5-5e94-894d-5ca2cc02b23b",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        920,
+        200
+      ],
+      "notes": "Renderer-Fehler merken",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "chooseBranchMode": "waitForAll",
+        "output": "specifiedInput",
+        "useDataOfInput": 2
+      },
+      "id": "ae229043-e63e-5c8a-89af-0ef5fe57d67c",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1160,
+        420
+      ],
+      "notes": "weiter ohne Renderer (mit Datei)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0d042053-59c9-52a6-a5e0-839a8634fdde",
+                    "leftValue": "={{ $json.endung === 'pdf' }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "50bd6d56-5b42-5c17-b336-98f5cdfa85b2",
+                    "leftValue": "={{ ['xlsx','xls','ods'].includes($json.endung) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Excel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e9d3868f-ac05-5d32-986e-6a4aa41c701e",
+                    "leftValue": "={{ $json.endung === 'csv' }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CSV"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2e59d792-b475-5b7e-b6ad-fd216f1776bd",
+                    "leftValue": "={{ ['md','txt','html','htm','json'].includes($json.endung) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a0cdef47-92ea-5908-87de-022a4850dd95",
+                    "leftValue": "={{ $json.azure_aktiv && ['pptx','docx','jpg','jpeg','png','bmp','tif','tiff'].includes($json.endung) }}",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Azure"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "nicht lesbar"
+        }
+      },
+      "id": "a957050e-9be7-5fd1-8128-06b450839340",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1380,
+        420
+      ],
+      "notes": "2 · n8n liest nach Dateityp",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "datei",
+        "options": {
+          "joinPages": false
+        }
+      },
+      "id": "c5206dda-91b0-5c96-b611-49652462368e",
+      "name": "Extract from File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        160
+      ],
+      "notes": "PDF je Seite",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c9f0b861-71cd-546e-bc59-a3874b2191a9",
+              "name": "abschnitte",
+              "value": "={{ (Array.isArray($json.text) ? $json.text : [String($json.text || '')]).map((t, i) => ({ fundstelle: 'Seite ' + (i + 1), text: String(t || '') })) }}",
+              "type": "array"
+            },
+            {
+              "id": "3c07a299-9e3f-5e6b-9967-506f7ed160f5",
+              "name": "zeichen",
+              "value": "={{ (Array.isArray($json.text) ? $json.text.join('') : String($json.text || '')).replace(/\\s+/g, '').length }}",
+              "type": "number"
+            },
+            {
+              "id": "fb33b0ef-08b3-5152-b760-c9ed4eade9a2",
+              "name": "hinweis",
+              "value": "={{ $json.error ? ('PDF nicht lesbar: ' + String($json.error.message || $json.error).slice(0, 200)) : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "7eee9bb3-9f5f-53c9-b306-776cbd011fc6",
+              "name": "extraktion",
+              "value": "n8n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b05deeac-53d8-5f16-98b7-ac4d28197df5",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1860,
+        160
+      ],
+      "notes": "Seiten → Abschnitte",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6ebd8179-c74b-5329-a131-336ee3834c23",
+              "leftValue": "={{ $json.zeichen >= 100 || !$('Edit Fields').first().json.azure_aktiv }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "70364127-835d-5555-9403-168a40cd0e16",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2080,
+        160
+      ],
+      "notes": "Text gefunden (oder kein Azure)?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "datei",
+        "options": {}
+      },
+      "id": "dc42188c-358f-5bc4-819a-48ddc8a2e705",
+      "name": "Extract from File1",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        340
+      ],
+      "notes": "Excel-Zeilen",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "datei",
+        "options": {}
+      },
+      "id": "8848cdbc-ab04-537b-b706-28b26d72b58f",
+      "name": "Extract from File2",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        500
+      ],
+      "notes": "CSV-Zeilen",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "zeilen",
+        "options": {}
+      },
+      "id": "bc5c6c63-1425-5473-96ef-23315c5bb133",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1860,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d6ad3cc5-ad4f-573c-8f77-b15ccc0f7d9b",
+              "name": "abschnitte",
+              "value": "={{ (() => { const z = ($json.zeilen || []).filter(r => r && !r.error); const out = []; for (let i = 0; i < z.length; i += 25) { out.push({ fundstelle: 'Zeilen ' + (i + 2) + '–' + (Math.min(i + 25, z.length) + 1), text: z.slice(i, i + 25).map(r => Object.entries(r).filter(([k, v]) => v !== '' && v != null).map(([k, v]) => k + ': ' + v).join('; ')).join('\\n') }); } return out; })() }}",
+              "type": "array"
+            },
+            {
+              "id": "7eee9bb3-9f5f-53c9-b306-776cbd011fc6",
+              "name": "extraktion",
+              "value": "n8n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc27060e-af30-5fac-9a76-a69d07cc0778",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2080,
+        420
+      ],
+      "notes": "Zeilen → Abschnitte",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "datei",
+        "destinationKey": "inhalt",
+        "options": {}
+      },
+      "id": "69b06a3a-458d-51a2-814c-0d8903fdcd30",
+      "name": "Extract from File3",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        660
+      ],
+      "notes": "Text/Markdown",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "27c40a29-6523-5c68-95ce-5211fb29acac",
+              "name": "abschnitte",
+              "value": "={{ (() => { const t = String($json.inhalt || ''); const teile = t.split(/\\n(?=#{1,3} )/); const out = []; let n = 0; teile.forEach(p => { for (let i = 0; i < p.length; i += 4000) { n += 1; const kopf = (p.match(/^#{1,3} (.+)/) || [])[1]; out.push({ fundstelle: kopf ? ('Abschnitt ' + n + ': ' + kopf.slice(0, 60)) : ('Abschnitt ' + n), text: p.slice(i, i + 4000) }); } }); return out; })() }}",
+              "type": "array"
+            },
+            {
+              "id": "7eee9bb3-9f5f-53c9-b306-776cbd011fc6",
+              "name": "extraktion",
+              "value": "n8n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "35760cf2-485b-5fa9-a98c-0e38e9b98ebb",
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1860,
+        660
+      ],
+      "notes": "Abschnitte bilden",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0d870eb4-d6b2-5d32-94a2-154c25a4a235",
+              "name": "abschnitte",
+              "value": "={{ [] }}",
+              "type": "array"
+            },
+            {
+              "id": "fd40332c-489e-523b-b2f2-7c1e33bf3482",
+              "name": "hinweis",
+              "value": "={{ 'Dateityp .' + $json.endung + ' kann ohne Renderer nicht gelesen werden' + ($json.azure_aktiv ? '' : ' (Azure Document Intelligence ist in ECOMEX 0 nicht eingetragen)') + '. Bitte als PDF speichern und erneut hochladen.' }}",
+              "type": "string"
+            },
+            {
+              "id": "7eee9bb3-9f5f-53c9-b306-776cbd011fc6",
+              "name": "extraktion",
+              "value": "n8n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0d6ff5d2-e8e0-5764-af10-dbcc49abc6e3",
+      "name": "Edit Fields6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1640,
+        980
+      ],
+      "notes": "nicht lesbar",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "chooseBranchMode": "waitForAll",
+        "output": "specifiedInput",
+        "useDataOfInput": 2
+      },
+      "id": "7041fc06-973c-5129-87e7-33946036e82a",
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2340,
+        820
+      ],
+      "notes": "3 · an Azure (mit Datei)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.konfig.azure_di_endpoint + '/documentintelligence/documentModels/prebuilt-layout:analyze?api-version=' + ($json.konfig.azure_di_api_version || '2024-11-30') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 180000,
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "={{ ({ pdf: 'application/pdf', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', html: 'text/html', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff' })[$json.endung] || 'application/octet-stream' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "datei"
+      },
+      "id": "7f5d5525-cc51-5f20-a254-5612147aa3de",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        820
+      ],
+      "notes": "Azure: Analyse beauftragen\n🔑 Header Auth: Azure Document Intelligence",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "433fc0f5-2d11-5cfd-bbbe-7f086f5c15ff",
+              "name": "operation_url",
+              "value": "={{ String(($json.headers || {})['operation-location'] || ($json.headers || {})['Operation-Location'] || '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b68fe4b5-fc58-5ee3-a321-d8d744564186",
+      "name": "Edit Fields8",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2780,
+        760
+      ],
+      "notes": "Ergebnisadresse",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a2dfea6b-48a6-5477-853e-98613403f321",
+              "leftValue": "={{ /^https:\\/\\/[^/]+\\.(cognitiveservices\\.azure\\.com|services\\.ai\\.azure\\.com|api\\.cognitive\\.microsoft\\.com)\\//.test($json.operation_url) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "b7fb87fd-fa95-5e8d-8367-87049b14f883",
+      "name": "If4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3000,
+        760
+      ],
+      "notes": "Auftrag angenommen?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 3,
+        "unit": "seconds"
+      },
+      "id": "05000ea8-411a-5b58-a58a-b5ac428fe0f3",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3220,
+        700
+      ],
+      "notes": "3 Sekunden warten",
+      "notesInFlow": true,
+      "webhookId": "bd44b77a-c749-5d88-aeda-9457e675c019"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Edit Fields8').first().json.operation_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "b6b7dae8-095d-5205-9f61-6f1a66872621",
+      "name": "HTTP Request2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3440,
+        700
+      ],
+      "notes": "Azure: Ergebnis abholen\n🔑 Header Auth: Azure Document Intelligence",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5faba76a-c60c-5301-b7aa-de591d566686",
+              "leftValue": "={{ $json.status }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "succeeded"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "15985c74-27ec-5017-99e7-36d7062d52fc",
+      "name": "If2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3660,
+        700
+      ],
+      "notes": "fertig?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "60179182-7111-50b9-ac8b-70bbcfa66663",
+              "leftValue": "={{ ['running','notStarted'].includes($json.status) && $runIndex < 80 }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "9e652e41-23d4-59b6-bd68-6dca4fa9cb1e",
+      "name": "If3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3880,
+        820
+      ],
+      "notes": "noch in Arbeit? (max. ~4 Min.)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const r = $json.analyzeResult || {};\n  const s = $('Edit Fields').first().json;\n  const label = s.endung === 'pptx' ? 'Folie' : (s.endung === 'xlsx' ? 'Blatt' : 'Seite');\n  const alles = String(r.content || '');\n  const out = [];\n  (r.pages || []).forEach(p => {\n    const nr = Number(p.pageNumber);\n    let teile = (p.lines || []).map(l => String(l.content || '').trim()).filter(Boolean);\n    if (!teile.length && Array.isArray(p.spans)) teile = p.spans.map(sp => alles.slice(sp.offset, sp.offset + sp.length).trim()).filter(Boolean);\n    if (!teile.length) teile = (r.paragraphs || []).filter(x => (x.boundingRegions || []).some(b => b.pageNumber === nr)).map(x => String(x.content || '').trim()).filter(Boolean);\n    if (teile.length) out.push({ fundstelle: label + ' ' + nr, text: teile.join('\\n') });\n  });\n  if (!out.length && alles.trim()) { for (let i = 0; i < alles.length; i += 4000) out.push({ fundstelle: 'Abschnitt ' + (out.length + 1), text: alles.slice(i, i + 4000) }); }\n  return { abschnitte: out, extraktion: 'azure',\n    hinweis: s.endung === 'pptx' ? 'Gelesen mit Azure Document Intelligence (Folientexte, ohne Sprechernotizen).' : '' };\n})() }}",
+        "options": {}
+      },
+      "id": "821714a6-bbe6-569a-ae08-8ab587c67648",
+      "name": "Edit Fields9",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3880,
+        620
+      ],
+      "notes": "Ergebnis (Azure)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const j = $json || {};\n  const e = j.error;\n  const status = String(j.status || '');\n  const grund = e ? String(e.message || e.description || (e.code ? e.code : JSON.stringify(e))).slice(0, 250)\n    : (status === 'running' || status === 'notStarted') ? 'Zeitlimit überschritten – Azure analysiert noch'\n    : (status ? 'Status ' + status : 'keine Ergebnisadresse von Azure erhalten');\n  return { abschnitte: [], extraktion: 'azure',\n    hinweis: 'Azure Document Intelligence konnte die Datei nicht lesen (' + grund + '). Bitte als PDF speichern oder den Renderer nutzen.' };\n})() }}",
+        "options": {}
+      },
+      "id": "5eb4408f-7d4c-5d44-bcee-606c2df7aaad",
+      "name": "Edit Fields10",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4100,
+        920
+      ],
+      "notes": "Azure-Fehler",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const s = $('Edit Fields').first().json;\n  const ab = ($json.abschnitte || []).filter(a => a && String(a.text || '').trim()).map(a => ({ fundstelle: String(a.fundstelle || ''), text: String(a.text).trim() }));\n  const text = ab.map(a => '[' + a.fundstelle + ']\\n' + a.text).join('\\n\\n');\n  const map = { pdf: 'pdf', pptx: 'pptx', docx: 'docx', md: 'md', txt: 'md' };\n  const rf = $('Edit Fields2').isExecuted ? ($('Edit Fields2').first().json.renderer_fehler + ' – Ersatzweg genutzt. ') : '';\n  const h = String($json.hinweis || '');\n  return { dateiname: s.dateiname, typ: s.endung, source_type: map[s.endung] || 'other', abschnitte: ab, abschnitte_anzahl: ab.length,\n    text, zeichen: text.length, extraktion: $json.extraktion || 'n8n',\n    hinweis: (rf + (h || (ab.length ? '' : 'Kein lesbarer Text gefunden (z. B. gescanntes PDF ohne Texterkennung).'))).trim() };\n})() }}",
+        "options": {}
+      },
+      "id": "0aa0e00e-e639-523f-a905-ab4c6b099bee",
+      "name": "Edit Fields7",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4340,
+        300
+      ],
+      "notes": "einheitliches Ergebnis",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {},
+      "id": "c28d1594-a952-5b98-8f0a-b9c0d84bcf6e",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4560,
+        300
+      ],
+      "notes": "Ergebnis an Aufrufer",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "### 3 · Azure Document Intelligence (optional)\nPowerPoint, Word, Bilder, gescannte PDFs. Auftrag senden → alle 3 s nachfragen (max. ~4 Min.) → Text je Folie/Seite.\nCredential: Header Auth *Azure Document Intelligence* (`Ocp-Apim-Subscription-Key`).",
+        "height": 130,
+        "width": 1900,
+        "color": 6
+      },
+      "id": "fd46c206-5d4d-5316-a39d-7b526f6eb71d",
+      "name": "Sticky Note az",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2320,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields8",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields8": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields9",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields9": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields10": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

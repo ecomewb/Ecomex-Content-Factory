@@ -1,0 +1,772 @@
+{
+  "name": "ECOMEX 11 | Systemcheck",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 11 · Systemcheck\nEinmal nach dem Import und nach jeder Änderung ausführen (*Execute workflow*).\n\nPrüft in ~30 Sekunden: Unterworkflows verknüpft, GitHub-Regelwerk, Supabase (Credential + SQL-Funktionen), Anthropic- und Azure-Header, Renderer, Textextraktion, KI-Credentials (Anthropic, OpenAI) und die Wissensbasis-Suche.\n\nErgebnis: Tabelle im letzten Node **Edit Fields3** (Feld `bericht`) – mit „Was tun?“ für jeden offenen Punkt.\nKosten: zwei kurze KI-Antworten und eine Embedding-Abfrage (Bruchteile eines Cents).",
+        "height": 440,
+        "width": 500,
+        "color": 4
+      },
+      "id": "a41a4b84-c27c-5618-a0da-aaaa7e9115ab",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "63eeccac-709f-5b77-812c-d24abe07bdfd",
+      "name": "When clicking ‘Execute workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ea6d3fc9-c918-53cf-993e-87d8e3f81602",
+              "name": "pruefmodus",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "496f563e-bc65-5c90-a1dc-02689e2e742d",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        200
+      ],
+      "notes": "Prüfmodus: Fehler melden statt abbrechen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 0 | Regelwerk & Katalog laden"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "7caf94e6-2cad-57da-ba52-2b271c2e6f03",
+      "name": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        200
+      ],
+      "notes": "Konfiguration, GitHub-Regelwerk, Renderer",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}).supabase_url }}/rest/v1/rpc/ecomex_kb_status",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ '{}' }}"
+      },
+      "id": "86ad8957-3075-5a25-a354-07ad4f8695c8",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        200
+      ],
+      "notes": "Supabase + SQL-Funktionen\n🔑 Supabase",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.anthropic.com/v1/models?limit=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "={{ ($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}).anthropic_version || '2026-10-21' }}"
+            }
+          ]
+        }
+      },
+      "id": "6d2ac98d-06f4-51cf-a051-64f78b5c4135",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        200
+      ],
+      "notes": "Anthropic Header Auth\n🔑 Header Auth: Anthropic",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ ($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}).azure_aktiv ? ($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}).azure_di_endpoint + '/documentintelligence/documentModels?api-version=' + ($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}).azure_di_api_version : 'https://azure-nicht-eingetragen.invalid' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "d1334902-9c36-5262-a293-53276fbef29a",
+      "name": "HTTP Request2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        200
+      ],
+      "notes": "Azure Document Intelligence (optional)\n🔑 Header Auth: Azure Document Intelligence",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}).renderer_aktiv ? ($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}).renderer_url : 'http://kein-renderer.invalid') }}/katalog",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "9344ed81-8882-59df-85fb-ae7e1f931909",
+      "name": "HTTP Request3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        200
+      ],
+      "notes": "Renderer-API-Key (optional)\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c77b5181-2273-53b6-aef9-3e281d8baef5",
+              "name": "testtext",
+              "value": "# ECOMEX Systemcheck\nDieser kurze Text prüft die Textextraktion.\n\n## Zweiter Abschnitt\nWenn hier zwei Abschnitte erkannt werden, funktioniert ECOMEX 7.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a9b800b8-defa-524b-93d0-5247ad9361f4",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1540,
+        200
+      ],
+      "notes": "Testdatei-Inhalt",
+      "notesInFlow": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "testtext",
+        "binaryPropertyName": "datei",
+        "options": {
+          "fileName": "systemcheck.md"
+        }
+      },
+      "id": "ad43f9b9-d3cd-59c0-ba53-df3288e327d3",
+      "name": "Convert to text file",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        200
+      ],
+      "notes": "Testdatei erzeugen",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "98b072d0-2adb-5193-8d94-15c052ce11fd",
+              "name": "dateiname",
+              "value": "systemcheck.md",
+              "type": "string"
+            },
+            {
+              "id": "a040d6a1-9c2d-5b0c-a89d-f387f9473ca4",
+              "name": "konfig",
+              "value": "={{ ($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {}) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2a3801e2-26c9-5329-8b53-aa06b18e0e3c",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1980,
+        200
+      ],
+      "notes": "Kontext (Datei bleibt erhalten)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 7 | Text extrahieren"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "a0cc8231-4c71-54e4-892f-45e1e55434b5",
+      "name": "Call 'ECOMEX 7 | Text extrahieren'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2200,
+        200
+      ],
+      "notes": "Textextraktion testen",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9fe869f3-3e9d-58df-b238-f56518cf28e8",
+              "name": "pruefung",
+              "value": "anthropic",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3161b12-4b71-51c2-99ca-93b31903dc82",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2420,
+        40
+      ],
+      "notes": "Prüf-Item Anthropic",
+      "notesInFlow": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8022b904-5a0e-52e7-bc6b-0abc55b219bd",
+              "name": "pruefung",
+              "value": "openai",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "207af06f-80da-51b5-92ff-78f0be849c85",
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2700,
+        40
+      ],
+      "notes": "Prüf-Item OpenAI",
+      "notesInFlow": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b57a505a-e2d9-5a68-aa53-637e7dba9a1a",
+              "name": "pruefung",
+              "value": "suche",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fd23d16c-71bf-5c90-9987-6ad56ad21861",
+      "name": "Edit Fields6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2980,
+        40
+      ],
+      "notes": "Prüf-Item Suche",
+      "notesInFlow": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Antworte nur mit dem Wort OK."
+      },
+      "id": "bb6fd349-073a-5541-9d76-7ebf2e1cc607",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2420,
+        200
+      ],
+      "notes": "Anthropic-KI-Credential testen",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5",
+          "cachedResultName": "Claude Sonnet 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 200
+        }
+      },
+      "id": "f467af8c-25f9-581a-b331-ba914c2d017e",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        2400,
+        420
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Antworte nur mit dem Wort OK."
+      },
+      "id": "80676f06-e56f-523e-ae47-753dd5645cdd",
+      "name": "Basic LLM Chain1",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2700,
+        200
+      ],
+      "notes": "OpenAI-KI-Credential testen",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5.5",
+          "cachedResultName": "gpt-5.5"
+        },
+        "responsesApiEnabled": true,
+        "options": {
+          "reasoningEffort": "low",
+          "timeout": 600000,
+          "maxRetries": 2
+        }
+      },
+      "id": "89ba1b3d-91d8-5a94-847b-08d0d418c32b",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2680,
+        420
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "ecomex_documents"
+        },
+        "prompt": "ECOMEX Systemcheck Wissensbasis",
+        "topK": 1,
+        "includeDocumentMetadata": true,
+        "options": {
+          "queryName": "ecomex_match_documents",
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "allow_reference",
+                "value": "true"
+              }
+            ]
+          }
+        }
+      },
+      "id": "dda72fc8-5afe-576f-9095-bacaa54496d0",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        2980,
+        200
+      ],
+      "notes": "Wissensbasis-Suche testen\n🔑 Supabase",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "7c8cfd67-2b02-5750-9cd5-0698d1bb8a39",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2960,
+        420
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const C0 = \"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\";\n  const C7 = \"Call 'ECOMEX 7 | Text extrahieren'\";\n  const get = n => { try { return $(n).isExecuted ? ($(n).first().json || {}) : null; } catch (e) { return null; } };\n  const fehler = j => { if (!j) return 'nicht ausgeführt'; const e = j.error; if (!e) return ''; return (typeof e === 'string' ? e : ([e.message, e.description].filter(Boolean).join(' – ') || e.code || JSON.stringify(e))).replace(/\\s+/g, ' ').slice(0, 220); };\n  const zeilen = [];\n  const add = (bereich, ok, ergebnis, tun) => zeilen.push({ bereich, status: ok === null ? '–' : (ok ? '✔' : '✖'), ergebnis, tun: ok ? '' : tun });\n  const w0 = get(C0) || {};\n  const k = w0.konfig || {};\n  const f0 = fehler(w0);\n  add('ECOMEX 0 verknüpft', !f0 && !!w0.konfig, f0 || 'Konfiguration geladen', 'Im Node „' + C0 + '“ den Workflow ECOMEX 0 auswählen.');\n  if (w0.konfig) {\n    add('GitHub-Regelwerk + Layoutkatalog', !!w0.regelwerk_ok, w0.regelwerk_ok ? (Object.keys(w0.regeln || {}).length + ' Regeldateien, ' + ((w0.katalog || {}).layouts || []).length + ' Layouts (' + k.katalog_quelle + ')') : w0.regelwerk_fehler, 'GitHub-Credential in ECOMEX 0 (List files, Get a file, Get a file1) wählen; Repo/Branch/Ordner in ECOMEX 0 › Edit Fields prüfen.');\n    add('Renderer', k.renderer_aktiv ? true : null, k.renderer_status, '');\n    if (k.katalog_warnung) add('Katalog-Version', false, k.katalog_warnung, 'Renderer neu bauen (docker compose up -d --build).');\n  }\n  const sb = $('HTTP Request').all().map(i => i.json).filter(j => j && j.review_status);\n  const fs = fehler(get('HTTP Request'));\n  add('Supabase (Credential + Datenbank)', !fs, fs || ('Wissensbasis: ' + (sb.length ? sb.map(s => s.review_status + ' ' + s.quellen + ' Quellen/' + s.chunks + ' Abschnitte').join(', ') : 'leer')), /function|could not be found|404|PGRST/i.test(fs) ? 'database/003_content_factory_betrieb.sql im Supabase-SQL-Editor ausführen.' : 'Supabase-Credential (Host + secret/service_role key) in den Supabase-Nodes wählen.');\n  const fa = fehler(get('HTTP Request1'));\n  add('Anthropic Header Auth (PPTX ohne Renderer)', !fa, fa || 'API erreichbar', 'Header-Auth-Credential „Anthropic“ (Name x-api-key) in ECOMEX 8, 9 und hier wählen.');\n  const fz = fehler(get('HTTP Request2'));\n  add('Azure Document Intelligence (optional)', k.azure_aktiv ? !fz : null, k.azure_aktiv ? (fz || 'erreichbar') : 'nicht eingetragen – PowerPoint/Word nur mit Renderer', 'Header-Auth-Credential „Azure Document Intelligence“ (Name Ocp-Apim-Subscription-Key) in ECOMEX 7 und hier wählen; Endpunkt in ECOMEX 0 prüfen.');\n  const fr = fehler(get('HTTP Request3'));\n  add('Renderer-API-Key', k.renderer_aktiv ? !fr : null, k.renderer_aktiv ? (fr || 'Zugriff ok') : 'kein Renderer', 'Header-Auth-Credential „ECOMEX Renderer“ (Name X-API-Key) wählen.');\n  const t7 = get(C7) || {};\n  const f7 = fehler(t7);\n  add('ECOMEX 7 Textextraktion', !f7 && t7.abschnitte_anzahl > 0, f7 || (t7.abschnitte_anzahl + ' Abschnitte per ' + t7.extraktion), 'Im Node „' + C7 + '“ den Workflow ECOMEX 7 auswählen.');\n  const kiFehler = j => fehler(j) || (j && j.pruefung ? 'keine Antwort – Credential fehlt oder ist ungültig (Details im rot markierten Node)' : '');\n  const la = get('Basic LLM Chain') || {};\n  add('Anthropic KI-Credential', !kiFehler(la) && !!la.text, kiFehler(la) || ('Antwort: ' + String(la.text || '').slice(0, 40)), 'Credential vom Typ „Anthropic“ anlegen (API-Key) und in allen Anthropic-Chat-Model-Nodes wählen.');\n  const lo = get('Basic LLM Chain1') || {};\n  add('OpenAI KI-Credential', !kiFehler(lo) && !!lo.text, kiFehler(lo) || ('Antwort: ' + String(lo.text || '').slice(0, 40)), 'Credential vom Typ „OpenAI“ anlegen (API-Key) und in allen OpenAI-Nodes wählen.');\n  const vs = get('Supabase Vector Store') || {};\n  const fv = kiFehler(vs);\n  add('Wissensbasis-Suche (Embeddings + Supabase)', !fv, fv || (vs.document ? 'Treffer: ' + ((vs.document.metadata || {}).title || 'ohne Titel') : 'funktioniert (noch keine Treffer)'), 'OpenAI-Credential in „Embeddings OpenAI“ und Supabase-Credential in „Supabase Vector Store“ wählen.');\n  const offen = zeilen.filter(z => z.status === '✖');\n  const md = ['# ECOMEX Systemcheck · ' + $now.toFormat('dd.MM.yyyy HH:mm'), '', offen.length ? ('**' + offen.length + ' Punkt(e) offen.**') : '**Alles bereit.**', '',\n    '| Prüfung | | Ergebnis | Was tun? |', '|---|---|---|---|'].concat(zeilen.map(z => '| ' + z.bereich + ' | ' + z.status + ' | ' + String(z.ergebnis || '').replace(/\\|/g, '/') + ' | ' + z.tun + ' |'));\n  return { alles_bereit: offen.length === 0, offen: offen.length, pruefungen: zeilen, bericht: md.join('\\n') };\n})() }}",
+        "options": {}
+      },
+      "id": "4520dfe1-3154-5887-8838-6bef6e50632d",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3260,
+        200
+      ],
+      "notes": "BERICHT",
+      "notesInFlow": true,
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 0 | Regelwerk & Katalog laden'": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Convert to text file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to text file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 7 | Text extrahieren'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 7 | Text extrahieren'": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

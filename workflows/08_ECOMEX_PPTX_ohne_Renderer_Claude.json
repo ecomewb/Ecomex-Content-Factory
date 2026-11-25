@@ -1,0 +1,633 @@
+{
+  "name": "ECOMEX 8 | PPTX ohne Renderer (Claude)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 8 · PPTX ohne Renderer (Claude)\nErsatzweg, wenn der Renderer fehlt oder ausfällt. Aufgerufen von ECOMEX 2 und 4.\n\nClaude baut mit dem **PPTX-Skill** aus den Deckdaten eine PowerPoint – mit dem ECOMEX-Master, wenn in ECOMEX 0 eine `claude_master_file_id` steht (einmalig über **ECOMEX 9** hochladen).\n\nAblauf: Auftrag → Claude arbeitet (bei Pausen automatisch fortsetzen, max. 8 Runden) → erzeugte Datei suchen → PPTX herunterladen.\nLangsamer und weniger exakt als der Renderer; das Ergebnis immer in PowerPoint sichten.\n\nCredential: Anthropic (dasselbe wie bei den Agenten) in allen **HTTP Request**-Nodes.",
+        "height": 480,
+        "width": 520,
+        "color": 4
+      },
+      "id": "ea1124f1-99fe-57fc-b9fa-e75047b9418a",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "6878e3c7-a379-5cd9-969f-118175b6bbbb",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const j = $json; const k = j.konfig || {};\n  const d = j.deck || {}; const meta = d.meta || {};\n  const regeln = [\"ERSTELLE EINE ECHTE, EDITIERBARE POWERPOINT (.pptx) mit dem pptx-Skill und speichere sie als herunterladbare Datei. Kein Text-Konzept, keine Bilder ganzer Folien.\", \"Folien GENAU in der Reihenfolge und Anzahl von deck.folien. Pro Folie: Titel aus felder.titel; alle übrigen Felder vollständig sichtbar umsetzen; 'notizen' 1:1 als Sprechernotizen.\", \"Das Feld 'layout' ist eine Katalog-ID (siehe LAYOUTKATALOG: Zweck und Felder). Setze die Aussage in der passenden Form um: prozess = nummerierte Schritte mit Pfeilen, zwei_spalten = Gegenüberstellung, karten = 2–4 gleichrangige Kästen, tabelle = echte Tabelle, zahl_fakt = große Zahl mit Quelle, uebung/material/loesung = Übungsfolien mit Arbeitsauftrag, Material und Musterlösung.\", \"Wenn ein ECOMEX-Master angehängt ist: Öffne ihn als Vorlage, nutze seine Folienlayouts, Farben, Schriften und das Logo. Titelfolie = Layout mit 'Titelseite' im Namen, Kapitel = 'Kapitelbalken', Pausen = 'Kaffeepause'/'Mittagspause', Inhalte = '33 · Freiraum | Titel und Blanko' oder ein passendes Layout aus dem Master. Entferne alle Beispielfolien des Masters.\", \"Ohne Master: schlichtes Design in den ECOMEX-Farben (Dunkelblau #1E3F63, Hellblau #48AFE3, Türkis #1BDBC3, Koralle #FF8B6B, Gelb #F3C84B), Schrift Open Sans, weißer Hintergrund. Kein erfundenes Logo.\", \"Jede Folie unten rechts klein mit 'ENTWURF – nicht freigegeben' kennzeichnen. Die Textbox MUSS den Formnamen 'ECOMEX_ENTWURF' tragen (damit sie bei der Freigabe automatisch entfernt werden kann).\", \"Inhalte NICHT verändern oder ergänzen: keine neuen Fakten, Zahlen, Quellen. Nur bei Platzmangel kürzen – dann den vollständigen Text in die Sprechernotizen. Schrift nie kleiner als 12 pt.\", \"review_hinweise und Bild-/Screenshot-Ideen als gut sichtbaren Platzhalterrahmen mit Text 'BILD: …' bzw. 'SCREENSHOT: …' umsetzen, nicht als erfundenes Bild.\", \"Speichere die Datei unter dem Namen aus 'dateiname' mit Endung .pptx. Prüfe am Ende selbst: Folienanzahl, Notizen vorhanden, keine Texte außerhalb der Folie. Antworte danach knapp mit einer Liste der Abweichungen.\"];\n  const text = regeln.map((r, i) => (i + 1) + '. ' + r).join('\\n')\n    + '\\n\\ndateiname: ' + (meta.dateiname || 'ECOMEX_Deck_ENTWURF')\n    + '\\n\\nDECK (JSON):\\n' + JSON.stringify(d)\n    + '\\n\\nLAYOUTKATALOG (Zweck und Felder je Layout-ID):\\n' + JSON.stringify(((j.katalog || {}).layouts || []).map(l => ({ id: l.id, name: l.name, einsatz: l.einsatz, felder: Object.keys(l.felder || {}) })))\n    + '\\n\\nECOMEX-DESIGNREGELN (design.md):\\n' + String(j.design_regeln || '(nicht geladen)').slice(0, 30000);\n  const content = [{ type: 'text', text }];\n  if (k.claude_master_file_id) content.push({ type: 'container_upload', file_id: k.claude_master_file_id });\n  return {\n    anthropic_request: { model: k.claude_pptx_modell || 'claude-sonnet-5-5', max_tokens: 32000,\n      container: { skills: [{ type: 'anthropic', skill_id: 'pptx', version: 'latest' }] },\n      tools: [{ type: k.code_execution_tool || 'code_execution_20260521', name: 'code_execution' }],\n      messages: [{ role: 'user', content }] },\n    runde: 1, anthropic_version: k.anthropic_version || '2026-10-21', master_file_id: k.claude_master_file_id || '',\n    master_verwendet: !!k.claude_master_file_id, dateiname: meta.dateiname || 'ECOMEX_Deck_ENTWURF'\n  };\n})() }}",
+        "options": {}
+      },
+      "id": "be54f440-173a-5390-8711-53b3d271b2e3",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        200
+      ],
+      "notes": "Auftrag an Claude",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 600000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "={{ $json.anthropic_version }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.anthropic_request) }}"
+      },
+      "id": "0a9d9787-b808-56be-a5c6-ae184f666d36",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        200
+      ],
+      "notes": "Claude arbeitet (PPTX-Skill)\n🔑 Header Auth: Anthropic",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 20000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f3d40a25-d334-503e-a4e0-294b96b1cad9",
+              "leftValue": "={{ $json.stop_reason }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "pause_turn"
+            },
+            {
+              "id": "a2c6986e-f30c-5e93-97db-e8b7331fe15f",
+              "leftValue": "={{ ($('Edit Fields1').isExecuted ? $('Edit Fields1').last().json.runde : 1) }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              },
+              "rightValue": 8
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "29a36a04-170c-5d4b-94cf-7db16da75983",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        200
+      ],
+      "notes": "Claude hat pausiert?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const prev = $('Edit Fields1').isExecuted ? $('Edit Fields1').last().json : $('Edit Fields').first().json;\n  const req = JSON.parse(JSON.stringify(prev.anthropic_request));\n  const msgs = req.messages;\n  const last = msgs[msgs.length - 1];\n  if (last && last.role === 'assistant') { last.content = (last.content || []).concat($json.content || []); }\n  else { msgs.push({ role: 'assistant', content: $json.content || [] }); }\n  req.container = { ...(req.container || {}), id: ($json.container && $json.container.id) || (req.container || {}).id };\n  return { ...prev, anthropic_request: req, runde: (prev.runde || 1) + 1 };\n})() }}",
+        "options": {}
+      },
+      "id": "6335e07f-fcf8-501a-b77b-50efbb63ed8b",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        940,
+        60
+      ],
+      "notes": "fortsetzen (gleicher Container)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const auftrag = $('Edit Fields').first().json;\n  const runden = $('Edit Fields1').isExecuted ? $('Edit Fields1').last().json.runde : 1;\n  let ids = [];\n  for (let r = 0; r < runden; r++) {\n    try {\n      $('HTTP Request').all(0, r).forEach(it => {\n        const s = JSON.stringify(it.json.content || []);\n        (s.match(/\"file_id\":\"file_[A-Za-z0-9_-]+\"/g) || []).forEach(m => ids.push(m.slice(11, -1)));\n      });\n    } catch (e) { }\n  }\n  ids = [...new Set(ids)].filter(id => id !== auftrag.master_file_id).reverse();\n  return { file_ids: ids, stop_reason: $json.stop_reason || '', runden, anthropic_version: auftrag.anthropic_version,\n    master_verwendet: auftrag.master_verwendet, dateiname: auftrag.dateiname };\n})() }}",
+        "options": {}
+      },
+      "id": "9855ed45-2629-58ab-9b5c-4a09e18e09fa",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        940,
+        340
+      ],
+      "notes": "erzeugte Dateien finden",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0a9ed812-3aa5-5cea-8765-4d53baa0fdb4",
+              "leftValue": "={{ $json.file_ids.length }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "ee55829d-22bc-5d4a-8ff4-dd17c9b2c2b1",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        340
+      ],
+      "notes": "Dateien vorhanden?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "file_ids",
+        "include": "allOtherFields",
+        "options": {
+          "destinationFieldName": "file_id"
+        }
+      },
+      "id": "509d9ce9-5a71-576f-a99d-66fb2916c57a",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.anthropic.com/v1/files/' + $json.file_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "={{ $json.anthropic_version }}"
+            }
+          ]
+        }
+      },
+      "id": "f3710188-d47f-51e6-872b-58d86404167c",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        260
+      ],
+      "notes": "Dateiname prüfen\n🔑 Header Auth: Anthropic",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a88ca110-7f2b-5ac5-acb5-e1253d416a37",
+              "leftValue": "={{ String($json.filename || '').toLowerCase() }}",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              },
+              "rightValue": ".pptx"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "6452000e-58f6-5e4e-9d37-770d720db65e",
+      "name": "Filter",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        260
+      ],
+      "notes": "nur PowerPoint",
+      "notesInFlow": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "maxItems": 1
+      },
+      "id": "6b68d2d2-3288-5a80-903f-06d6ec94a10a",
+      "name": "Limit",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        260
+      ],
+      "notes": "neueste PPTX",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.anthropic.com/v1/files/' + $json.id + '/content' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 180000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "pptx"
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "={{ $('Edit Fields2').first().json.anthropic_version }}"
+            }
+          ]
+        }
+      },
+      "id": "4b893a84-b694-5ad4-9295-0735ff548a5d",
+      "name": "HTTP Request2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2280,
+        260
+      ],
+      "notes": "PPTX herunterladen\n🔑 Header Auth: Anthropic",
+      "notesInFlow": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4c8be1d-cdd8-5b52-a02f-a57fc54f57ad",
+              "name": "pptx",
+              "value": "={{ $binary.pptx.id ? Object.assign({}, $binary.pptx, { fileName: $('Edit Fields2').first().json.dateiname + '.pptx', fileExtension: 'pptx', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' }) : 'pptx' }}",
+              "type": "binary"
+            },
+            {
+              "id": "005e181b-a3f9-5862-bfa7-6b9fdfd537c9",
+              "name": "pptx_quelle",
+              "value": "claude",
+              "type": "string"
+            },
+            {
+              "id": "fab6dd7e-3bb2-52ab-83b7-857725611ee4",
+              "name": "claude_runden",
+              "value": "={{ $('Edit Fields2').first().json.runden }}",
+              "type": "number"
+            },
+            {
+              "id": "fd326188-cff3-51c9-ab47-f950c474d303",
+              "name": "master_verwendet",
+              "value": "={{ $('Edit Fields2').first().json.master_verwendet }}",
+              "type": "boolean"
+            },
+            {
+              "id": "aa1365d2-6c44-5df5-8171-fcadd54f52cc",
+              "name": "hinweis",
+              "value": "={{ 'PPTX von Claude (PPTX-Skill, ' + $('Edit Fields2').first().json.runden + ' Runde(n), ' + ($('Edit Fields2').first().json.master_verwendet ? 'mit ECOMEX-Master' : 'ohne Master – Design nachbearbeiten') + '). Keine automatische Layoutprüfung.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a30ba804-e5b6-5c90-a73a-7e5b866e9d5d",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2500,
+        180
+      ],
+      "notes": "Ergebnis: PPTX (Datei bleibt erhalten)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "81eb5ba2-233d-545d-a320-0ac01594a41a",
+              "name": "pptx_quelle",
+              "value": "keine",
+              "type": "string"
+            },
+            {
+              "id": "d48a8a50-c0af-5ea5-a5ba-8464bafa949e",
+              "name": "hinweis",
+              "value": "={{ $json.error ? ('Claude-API-Fehler: ' + String($json.error.message || JSON.stringify($json.error)).slice(0, 300)) : ('Claude hat keine PowerPoint-Datei geliefert (stop_reason: ' + ($('Edit Fields2').isExecuted ? $('Edit Fields2').first().json.stop_reason : '?') + '). Ohne Renderer bitte Manuskript nutzen oder den Lauf wiederholen.') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aced0b9c-65fa-553d-a190-f2377178e440",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2500,
+        440
+      ],
+      "notes": "Ergebnis: keine PPTX",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {},
+      "id": "30e8356d-e98a-540a-afcf-8131926d1fce",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2740,
+        300
+      ],
+      "notes": "Ergebnis an Aufrufer",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

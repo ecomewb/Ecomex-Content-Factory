@@ -1,0 +1,832 @@
+{
+  "name": "ECOMEX 0 | Regelwerk & Katalog laden",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 0 · Konfiguration, Regelwerk & Katalog\nWird von allen anderen Workflows aufgerufen – nicht direkt starten.\n\n**Einziger Ort für Einstellungen:** Node **Edit Fields** (GitHub, Renderer-URL, Supabase, PPTX-Ersatz über Claude).\n\n1. **HTTP Request** prüft `/health` des Renderers. Nicht erreichbar → alle Workflows nehmen automatisch den Weg ohne Renderer.\n2. Aufrufe mit `nur_konfig: true` (Wissensbasis, Ablage, Freigabe) enden hier.\n3. Sonst: alle `.md`-Regeln aus `governance/` und den Layoutkatalog aus GitHub laden (Katalog notfalls vom Renderer).\n\nCredentials: GitHub in *List files*, *Get a file*, *Get a file1*; Header Auth *ECOMEX Renderer* in *HTTP Request1* (nur mit Renderer).\nPrüfen: **ECOMEX 11 | Systemcheck** ausführen.",
+        "height": 560,
+        "width": 500,
+        "color": 4
+      },
+      "id": "4d99deea-a5d7-5fad-ada1-d58db78434ab",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "00aea6ca-793b-5d31-a62e-5e8a248f8d60",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "445e2da0-e94f-56c6-93a4-a7d02a37a2b0",
+              "name": "github_owner",
+              "value": "ecomewb",
+              "type": "string"
+            },
+            {
+              "id": "beef7ac1-9a2e-59f2-ae20-04eafc9a9dc8",
+              "name": "github_repo",
+              "value": "Ecomex-Content-Factory",
+              "type": "string"
+            },
+            {
+              "id": "0f14a8cf-e487-5c33-a9fc-d96d32f76039",
+              "name": "branch",
+              "value": "main",
+              "type": "string"
+            },
+            {
+              "id": "c2b75d52-3a3a-5e92-af03-30f7b8628576",
+              "name": "regel_ordner",
+              "value": "governance",
+              "type": "string"
+            },
+            {
+              "id": "77a7ce2e-40ca-5cd3-a933-844351c1f693",
+              "name": "katalog_pfad",
+              "value": "renderer/app/catalog.json",
+              "type": "string"
+            },
+            {
+              "id": "0d45b3ff-b1c7-5446-b2a6-82ef143e280a",
+              "name": "renderer_url",
+              "value": "http://ecomex-renderer:8080",
+              "type": "string"
+            },
+            {
+              "id": "4339710c-50a5-5ee8-8b11-c8d4a75bab3c",
+              "name": "supabase_url",
+              "value": "https://bymgndzxyzepzuqnceyt.supabase.co",
+              "type": "string"
+            },
+            {
+              "id": "3d365d00-d080-50ab-a619-e026fc728f40",
+              "name": "supabase_bucket",
+              "value": "ecomex-sources",
+              "type": "string"
+            },
+            {
+              "id": "5d6c103d-585d-5c01-a0ce-45a8ab39152c",
+              "name": "wissensbasis_referenzen",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "273a603e-4e2e-5a48-80a2-8eb8284c0038",
+              "name": "pptx_ohne_renderer",
+              "value": "claude",
+              "type": "string"
+            },
+            {
+              "id": "aee12779-02ca-579d-802c-054855436cac",
+              "name": "claude_pptx_modell",
+              "value": "claude-sonnet-5-5",
+              "type": "string"
+            },
+            {
+              "id": "cc12c757-b042-5450-b6d2-134ade1d5116",
+              "name": "claude_master_file_id",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "7c6f7c57-0252-5207-89e1-e0c3991c7ebb",
+              "name": "anthropic_version",
+              "value": "2026-10-21",
+              "type": "string"
+            },
+            {
+              "id": "ff53cfa9-6d19-59d4-b1de-07997a8ac2bc",
+              "name": "code_execution_tool",
+              "value": "code_execution_20260521",
+              "type": "string"
+            },
+            {
+              "id": "db95e761-e6d3-52b5-8364-2528bf16925b",
+              "name": "azure_di_endpoint",
+              "value": "https://ecomex-doc-intelligence.cognitiveservices.azure.com",
+              "type": "string"
+            },
+            {
+              "id": "aab869af-06e5-59c1-94c9-594bde9ce123",
+              "name": "azure_di_api_version",
+              "value": "2024-11-30",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d58808f-2f38-543a-aa20-3e744007d700",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        200
+      ],
+      "notes": "EINSTELLUNGEN (einziger Ort)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ String($json.renderer_url || '').trim() ? String($json.renderer_url).trim().replace(/\\/+$/, '') + '/health' : 'http://renderer-nicht-konfiguriert.invalid/health' }}",
+        "options": {
+          "timeout": 8000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "853eddb6-e325-5cf6-8751-1af6e2be4f56",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        200
+      ],
+      "notes": "Renderer erreichbar?",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const c = $('Edit Fields').first().json;\n  const h = $json || {};\n  const body = h.body && typeof h.body === 'object' ? h.body : {};\n  const aktiv = Number(h.statusCode) === 200 && body.status === 'ok';\n  const grund = h.error ? String(h.error.message || h.error.description || JSON.stringify(h.error)).slice(0, 160) : ('HTTP ' + (h.statusCode || '?'));\n  const konfig = { ...c,\n    renderer_url: String(c.renderer_url || '').trim().replace(/\\/+$/, ''),\n    supabase_url: String(c.supabase_url || '').trim().replace(/\\/+$/, ''),\n    azure_di_endpoint: String(c.azure_di_endpoint || '').trim().replace(/\\/+$/, ''),\n    azure_aktiv: !!String(c.azure_di_endpoint || '').trim(),\n    renderer_aktiv: aktiv,\n    renderer_status: aktiv ? ('Renderer erreichbar · Master: ' + body.master + (body.demo_master ? ' (DEMO – Originalmaster fehlt!)' : '')) : ('Renderer nicht erreichbar – Weg ohne Renderer (' + grund + ')'),\n    renderer_master: body.master || '', renderer_demo_master: !!body.demo_master, renderer_katalog_version: body.katalog_version || '',\n    geprueft_am: $now.toISO() };\n  return { ...$('When Executed by Another Workflow').first().json, konfig };\n})() }}",
+        "options": {}
+      },
+      "id": "bdb4460c-9353-5ab1-95c9-3ca796f32772",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        200
+      ],
+      "notes": "Konfiguration + Renderer-Status",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6d9403f8-42ae-5955-93cc-4cd9f21d17bf",
+              "leftValue": "={{ $json.nur_konfig === true || $json.nur_konfig === 'true' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "3f756d60-0f3b-5550-9cef-081b20bd7fbe",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        200
+      ],
+      "notes": "nur Konfiguration gewünscht?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {},
+      "id": "9e28ef79-b382-5ea6-b8eb-c27dc4b3214c",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        40
+      ],
+      "notes": "Ergebnis: nur Konfiguration",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "list",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $json.konfig.github_owner }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $json.konfig.github_repo }}"
+        },
+        "filePath": "={{ $json.konfig.regel_ordner }}"
+      },
+      "id": "7912b99a-6eda-57e5-840f-aba1645e24c7",
+      "name": "List files",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        300
+      ],
+      "notes": "Regel-Ordner in GitHub auflisten\n🔑 GitHub",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5cd80a96-19d2-56d3-8b8a-7f2ab5e03293",
+              "leftValue": "={{ $json.type }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "file"
+            },
+            {
+              "id": "7c22a4ee-1c95-5fcc-ba09-3040c9ff4889",
+              "leftValue": "={{ $json.name }}",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              },
+              "rightValue": ".md"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "1637aa83-3d86-55d0-af0f-d7601b22ae2d",
+      "name": "Filter",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1420,
+        300
+      ],
+      "notes": "nur Markdown-Regeln",
+      "notesInFlow": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $('Edit Fields1').first().json.konfig.github_owner }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $('Edit Fields1').first().json.konfig.github_repo }}"
+        },
+        "filePath": "={{ $json.path }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ $('Edit Fields1').first().json.konfig.branch }}"
+        }
+      },
+      "id": "886c41b7-eb1b-5002-9707-a8664fdcecd0",
+      "name": "Get a file",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1640,
+        300
+      ],
+      "notes": "jede Regel LIVE laden\n🔑 GitHub",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ebfada2-c8d8-541a-957e-3d8aafbd8a7b",
+              "name": "datei",
+              "value": "={{ $json.name || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "6fff050e-26db-59dd-a053-7b1842c8cc2d",
+              "name": "sha",
+              "value": "={{ $json.sha || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "0fe6c481-a5d2-53dd-88d0-b362b8f2fa1d",
+              "name": "text",
+              "value": "={{ $json.content ? $json.content.base64Decode() : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "63a81573-efef-5ced-9fd3-59acbb98e41c",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1860,
+        300
+      ],
+      "notes": "Base64 → Text",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "regeldateien",
+        "options": {}
+      },
+      "id": "93246981-9b2b-585e-b7e4-d271bcb6f7cd",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        300
+      ],
+      "notes": "alle Regeln bündeln",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $('Edit Fields1').first().json.konfig.github_owner }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $('Edit Fields1').first().json.konfig.github_repo }}"
+        },
+        "filePath": "={{ $('Edit Fields1').first().json.konfig.katalog_pfad }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ $('Edit Fields1').first().json.konfig.branch }}"
+        }
+      },
+      "id": "4f272716-257b-5adc-a8aa-ea7756ac2b61",
+      "name": "Get a file1",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        2300,
+        300
+      ],
+      "notes": "Layoutkatalog aus GitHub\n🔑 GitHub",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5a41e156-bcb3-55b7-8ab0-2d410efd074d",
+              "leftValue": "={{ !!$json.content || !$('Edit Fields1').first().json.konfig.renderer_aktiv }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "051aa35c-859c-5d9f-b977-ed867989b3e9",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2520,
+        300
+      ],
+      "notes": "Katalog aus GitHub (oder kein Renderer)?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Edit Fields1').first().json.konfig.renderer_url }}/katalog",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "720b87a8-33b3-5a01-9850-433fd53af5b7",
+      "name": "HTTP Request1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2740,
+        420
+      ],
+      "notes": "Ersatz: Katalog vom Renderer\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const basis = $('Edit Fields1').first().json;\n  const konfig = { ...basis.konfig };\n  const dateien = ($('Aggregate').first().json.regeldateien || []).filter(r => r.datei);\n  let kat = null, quelle = '';\n  try { const g = $('Get a file1').first().json; if (g.content) { kat = JSON.parse(g.content.base64Decode()); quelle = 'GitHub ' + konfig.katalog_pfad; } } catch (e) { kat = null; }\n  if (!kat && $('HTTP Request1').isExecuted && Array.isArray($('HTTP Request1').first().json.layouts)) { kat = $('HTTP Request1').first().json; quelle = 'Renderer /katalog'; }\n  kat = kat || { layouts: [] };\n  konfig.katalog_quelle = quelle || 'nicht gefunden';\n  konfig.katalog_warnung = konfig.renderer_aktiv && konfig.renderer_katalog_version && kat.version && String(konfig.renderer_katalog_version) !== String(kat.version)\n    ? ('Katalog im Renderer (v' + konfig.renderer_katalog_version + ') weicht von GitHub (v' + kat.version + ') ab – Renderer neu bauen.') : '';\n  const pflicht = ['curriculum.md','didaktik.md','design.md','qa_rules.md','content_workflow.md'];\n  const regeln = Object.fromEntries(dateien.map(r => [r.datei, r.text]));\n  const fehlend = pflicht.filter(d => String(regeln[d] || '').length <= 200);\n  const lf = $('List files').first().json || {};\n  const gh = lf.error ? String(lf.error.message || lf.error.description || lf.error).slice(0, 200) : '';\n  const fehler = [];\n  if (gh) fehler.push('GitHub nicht erreichbar (Credential/Repo/Ordner prüfen): ' + gh);\n  if (fehlend.length) fehler.push('Pflichtregeln fehlen oder zu kurz in ' + konfig.regel_ordner + ': ' + fehlend.join(', ') + ' | gefunden: ' + (Object.keys(regeln).join(', ') || 'nichts'));\n  if ((kat.layouts || []).length < 10) fehler.push('Layoutkatalog nicht gefunden (' + konfig.katalog_pfad + '), ' + (kat.layouts || []).length + ' Layouts');\n  return { ...basis, konfig,\n    regelwerk_ok: fehler.length === 0, regelwerk_fehler: fehler.join(' · '),\n    regeln,\n    regel_versionen: dateien.map(r => ({ datei: r.datei, sha: String(r.sha).slice(0, 7) })),\n    katalog: { version: kat.version, regeln_fuer_agenten: kat.regeln_fuer_agenten || [], layouts: kat.layouts || [] },\n    regelwerk_geladen_am: $now.toISO() };\n})() }}",
+        "options": {}
+      },
+      "id": "0bd9bb60-2ef4-5c1b-a277-fdba417aa772",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2960,
+        300
+      ],
+      "notes": "Regelwerk + Katalog + Konfiguration",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "12195a4c-99e0-5465-a91e-268f08053e1f",
+              "leftValue": "={{ $json.regelwerk_ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "12de6929-4277-50f2-87c1-d6b6cb3813c7",
+      "name": "If2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3180,
+        300
+      ],
+      "notes": "Regelwerk + Katalog vollständig?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "62aa55b0-e621-531e-abe8-5e0d366baf4a",
+              "leftValue": "={{ $json.pruefmodus === true || $json.pruefmodus === 'true' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "28cd286b-127d-5cbf-b20d-ba6a23e6e529",
+      "name": "If3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3400,
+        420
+      ],
+      "notes": "Aufruf aus dem Systemcheck?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {},
+      "id": "47d802f8-41a5-57b7-99b7-54ea20fbf448",
+      "name": "No Operation, do nothing1",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3640,
+        200
+      ],
+      "notes": "Ergebnis an Aufrufer",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "errorMessage": "={{ 'ECOMEX 0: ' + $json.regelwerk_fehler + ' – Tipp: „ECOMEX 11 | Systemcheck“ ausführen.' }}"
+      },
+      "id": "e1cdbc0d-7b08-578e-8bd5-fe6433b39429",
+      "name": "Stop and Error",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        3640,
+        520
+      ],
+      "notes": "sichtbarer Abbruch",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List files": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Get a file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}

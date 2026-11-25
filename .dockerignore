@@ -1,0 +1,8 @@
+# Nur Renderer und Folienmaster gehören ins Image
+*
+!renderer
+!renderer/**
+!design/*.pptx
+renderer/tests/out
+**/__pycache__
+**/*.pyc

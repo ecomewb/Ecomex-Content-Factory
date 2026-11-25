@@ -1,0 +1,272 @@
+{
+  "name": "ECOMEX 9 | Master an Claude übergeben",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 9 · Master an Claude übergeben (einmalig)\nNur nötig für den Weg **ohne Renderer** (ECOMEX 8).\n\nLädt den ECOMEX-Folienmaster in die Anthropic Files API. Die angezeigte `file_id` in **ECOMEX 0 › Edit Fields › claude_master_file_id** eintragen.\nBei einem neuen Master erneut ausführen.\n\nCredential: Anthropic in *HTTP Request*.",
+        "height": 360,
+        "width": 480,
+        "color": 4
+      },
+      "id": "ef3510f3-10c3-5009-b281-16e9d98c2c94",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "formTitle": "ECOMEX · Master an Claude übergeben",
+        "formDescription": "Einmalig für die PPTX-Erzeugung ohne Renderer.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "ECOMEX-Master (.pptx)",
+              "fieldName": "master",
+              "fieldType": "file",
+              "requiredField": true,
+              "multipleFiles": false,
+              "acceptFileTypes": ".pptx,.potx"
+            },
+            {
+              "fieldLabel": "Freigabe",
+              "fieldName": "freigabe",
+              "fieldType": "checkbox",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Die Übermittlung des ECOMEX-Masters an Anthropic ist intern freigegeben."
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "path": "ecomex-master-claude",
+          "buttonLabel": "Hochladen",
+          "appendAttribution": false
+        }
+      },
+      "id": "23e40384-6d1d-5c9f-8184-95567e97f1f7",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        200
+      ],
+      "notes": "Einstieg",
+      "notesInFlow": true,
+      "webhookId": "72d1832b-bc9d-5f8c-8484-941839330344"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e19ee0a6-b66b-55d1-9624-027a5bae3e2c",
+              "name": "nur_konfig",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b37366c7-208a-57e5-9ecc-c75d954400f6",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        200
+      ],
+      "notes": "nur Konfiguration anfordern",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "ECOMEX 0 | Regelwerk & Katalog laden"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "2f632c5a-24c5-53e8-a985-bbba5e04d2b1",
+      "name": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        80
+      ],
+      "notes": "API-Version aus der Konfiguration",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "77ca2915-bfce-5643-a9aa-8afdb7fed1f8",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/files",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 300000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "={{ $json.konfig.anthropic_version }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "master"
+            }
+          ]
+        }
+      },
+      "id": "5c23addc-dcf6-5f31-9963-88eb523207bd",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        200
+      ],
+      "notes": "Master hochladen\n🔑 Header Auth: Anthropic",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Master übergeben",
+        "completionMessage": "={{ 'file_id: ' + $json.id + ' — bitte in ECOMEX 0 › Edit Fields › claude_master_file_id eintragen und speichern. (Datei: ' + ($json.filename || '') + ')' }}",
+        "options": {}
+      },
+      "id": "5a7b4996-113b-5b08-8058-38ba17e23144",
+      "name": "Form",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1100,
+        200
+      ],
+      "webhookId": "6075c2f7-eb8d-5a53-ad94-05d89f65f1a6"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'ECOMEX 0 | Regelwerk & Katalog laden'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Call 'ECOMEX 0 | Regelwerk & Katalog laden'": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "0.3"
+  },
+  "tags": []
+}
