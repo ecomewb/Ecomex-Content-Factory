@@ -153,7 +153,7 @@
         680,
         220
       ],
-      "notes": "Ablage-Inventar aus der Datenbank",
+      "notes": "Ablage-Inventar aus der Datenbank\n🔑 Supabase",
       "notesInFlow": true,
       "alwaysOutputData": true
     },
@@ -268,7 +268,7 @@
         1800,
         260
       ],
-      "notes": "Datei aus der Ablage laden",
+      "notes": "Datei aus der Ablage laden\n🔑 Supabase",
       "notesInFlow": true,
       "onError": "continueErrorOutput"
     },
@@ -482,7 +482,7 @@
         3120,
         40
       ],
-      "notes": "Quelle registrieren",
+      "notes": "Quelle registrieren\n🔑 Supabase",
       "notesInFlow": true,
       "onError": "continueRegularOutput"
     },
@@ -546,7 +546,7 @@
         3800,
         120
       ],
-      "notes": "durchsuchbar speichern",
+      "notes": "durchsuchbar speichern\n🔑 Supabase",
       "notesInFlow": true
     },
     {
@@ -637,7 +637,9 @@
       "position": [
         3680,
         360
-      ]
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -779,7 +781,7 @@
         1800,
         460
       ],
-      "notes": "Stand der Wissensbasis",
+      "notes": "Stand der Wissensbasis\n🔑 Supabase",
       "notesInFlow": true,
       "executeOnce": true,
       "alwaysOutputData": true
@@ -1138,7 +1140,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

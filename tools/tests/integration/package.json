@@ -1,0 +1,15 @@
+{
+  "name": "ecomex-workflow-integrationstests",
+  "private": true,
+  "description": "Führt alle ECOMEX-Workflows mit der echten n8n-2.46-Engine aus (externe Dienste simuliert, Renderer lokal)",
+  "scripts": { "test": "node it_all.js" },
+  "//": "Installation: npm install --ignore-scripts  ·  vorher: python3 vorbereiten.py (Renderer muss laufen)",
+  "dependencies": {
+    "@n8n/di": "0.17.0",
+    "@n8n/n8n-nodes-langchain": "2.46.4",
+    "n8n-core": "2.46.4",
+    "n8n-nodes-base": "2.46.4",
+    "n8n-workflow": "2.46.4",
+    "nock": "13.5.6"
+  }
+}

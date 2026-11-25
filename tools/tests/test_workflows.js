@@ -48,13 +48,18 @@ const kat = JSON.parse(fs.readFileSync(path.join(ROOT, 'renderer/app/catalog.jso
 const b64 = Buffer.from(JSON.stringify(kat)).toString('base64').replace(/(.{60})/g, '$1\n');
 const k1 = { ...k, konfig: { ...k.konfig, renderer_aktiv: true, renderer_katalog_version: '3', katalog_pfad: 'renderer/app/catalog.json' } };
 const regeln = ['curriculum.md', 'didaktik.md', 'design.md', 'qa_rules.md', 'content_workflow.md'].map(d => ({ datei: d, sha: 'abc1234def', text: 'x'.repeat(300) }));
-let r3 = ev(wf0, 'Edit Fields3', ['jsonOutput'], { 'Edit Fields1': [[[k1]]], Aggregate: [[[{ regeldateien: regeln }]]], 'Get a file1': [[[{ content: b64 }]]] }, {});
+const LF = { 'List files': [[[{ name: 'curriculum.md', type: 'file' }]]] };
+let r3 = ev(wf0, 'Edit Fields3', ['jsonOutput'], { ...LF, 'Edit Fields1': [[[k1]]], Aggregate: [[[{ regeldateien: regeln }]]], 'Get a file1': [[[{ content: b64 }]]] }, {});
 ok(r3.katalog.layouts.length === kat.layouts.length && /GitHub/.test(r3.konfig.katalog_quelle), 'Katalog aus GitHub (Base64 mit Zeilenumbrüchen) gelesen: ' + r3.katalog.layouts.length + ' Layouts');
 ok(/weicht/.test(r3.konfig.katalog_warnung), 'abweichende Katalogversion wird gewarnt');
 ok(Object.keys(r3.regeln).length === 5 && r3.regel_versionen[0].sha === 'abc1234', 'Regeln + SHA gebündelt');
-r3 = ev(wf0, 'Edit Fields3', ['jsonOutput'], { 'Edit Fields1': [[[k1]]], Aggregate: [[[{ regeldateien: regeln }]]], 'Get a file1': [[[{ error: 'not found' }]]], 'HTTP Request1': [[[kat]]] }, {});
+r3 = ev(wf0, 'Edit Fields3', ['jsonOutput'], { ...LF, 'Edit Fields1': [[[k1]]], Aggregate: [[[{ regeldateien: regeln }]]], 'Get a file1': [[[{ error: 'not found' }]]], 'HTTP Request1': [[[kat]]] }, {});
 ok(r3.katalog.layouts.length === kat.layouts.length && /Renderer/.test(r3.konfig.katalog_quelle), 'Ersatz: Katalog vom Renderer');
-ok(ev(wf0, 'If2', ['conditions', 'conditions', 0, 'leftValue'], {}, r3) === true, 'Pflichtregeln-Prüfung besteht');
+ok(r3.regelwerk_ok === true && ev(wf0, 'If2', ['conditions', 'conditions', 0, 'leftValue'], {}, r3) === true, 'Pflichtregeln-Prüfung besteht');
+const r4 = ev(wf0, 'Edit Fields3', ['jsonOutput'], { 'List files': [[[{ error: { message: 'The resource you are requesting could not be found' } }]]], 'Edit Fields1': [[[k1]]], Aggregate: [[[{ regeldateien: [] }]]], 'Get a file1': [[[{ error: 'x' }]]] }, {});
+ok(r4.regelwerk_ok === false && /GitHub nicht erreichbar/.test(r4.regelwerk_fehler) && /Pflichtregeln fehlen/.test(r4.regelwerk_fehler), 'GitHub-Fehler wird verständlich gemeldet: ' + r4.regelwerk_fehler.slice(0, 70));
+ok(ev(wf0, 'If1', ['conditions', 'conditions', 0, 'leftValue'], { 'Edit Fields1': [[[{ konfig: { renderer_aktiv: false } }]]] }, { error: 'x' }) === true, 'ohne Renderer kein Katalog-Ersatzaufruf');
+ok(k.konfig.azure_aktiv === true && /cognitiveservices/.test(k.konfig.azure_di_endpoint), 'Azure-Endpunkt aus der Konfiguration');
 
 // ---------------------------------------------------------------- WF7
 console.log('WF7 Text extrahieren');
@@ -73,6 +78,18 @@ ok(fin.abschnitte_anzahl === 1 && fin.source_type === 'pdf' && fin.zeichen > 0 &
 const fin2 = ev(wf7, 'Edit Fields7', ['jsonOutput'], { 'Edit Fields': [[[{ ...sel, endung: 'xlsx' }]]] }, { abschnitte: [], hinweis: '' });
 ok(fin2.source_type === 'other' && /Kein lesbarer Text/.test(fin2.hinweis), 'xlsx → source_type other (DB-konform), Hinweis bei leerem Text');
 ok(ev(wf7, 'Edit Fields6', assignVal(wf7, 'Edit Fields6', 'hinweis'), {}, { endung: 'pptx' }).includes('als PDF'), 'PPTX ohne Renderer → klarer Hinweis');
+
+const azr = { status: 'succeeded', analyzeResult: { content: 'Titel A\nPunkt 1\nTitel B', pages: [{ pageNumber: 1, spans: [{ offset: 0, length: 16 }] }, { pageNumber: 2, spans: [{ offset: 16, length: 7 }] }] } };
+const az = ev(wf7, 'Edit Fields9', ['jsonOutput'], { 'Edit Fields': [[[{ ...sel, endung: 'pptx' }]]] }, azr);
+ok(az.abschnitte.length === 2 && az.abschnitte[1].fundstelle === 'Folie 2' && az.abschnitte[1].text === 'Titel B' && az.extraktion === 'azure', 'Azure: Text je Folie aus spans');
+const az2 = ev(wf7, 'Edit Fields9', ['jsonOutput'], { 'Edit Fields': [[[{ ...sel, endung: 'pdf' }]]] }, { analyzeResult: { content: 'x', pages: [{ pageNumber: 1, lines: [{ content: 'Zeile 1' }, { content: 'Zeile 2' }] }] } });
+ok(az2.abschnitte[0].fundstelle === 'Seite 1' && az2.abschnitte[0].text === 'Zeile 1\nZeile 2', 'Azure: gescanntes PDF je Seite aus lines');
+ok(/Zeitlimit/.test(ev(wf7, 'Edit Fields10', ['jsonOutput'], {}, { status: 'running' }).hinweis) && /InvalidRequest/.test(ev(wf7, 'Edit Fields10', ['jsonOutput'], {}, { status: 'failed', error: { code: 'InvalidRequest', message: 'InvalidRequest: bad file' } }).hinweis), 'Azure-Fehler und Zeitlimit verständlich');
+ok(ev(wf7, 'Edit Fields8', assignVal(wf7, 'Edit Fields8', 'operation_url'), {}, { statusCode: 202, headers: { 'operation-location': 'https://ecomex-doc-intelligence.cognitiveservices.azure.com/documentintelligence/documentModels/prebuilt-layout/analyzeResults/abc?api-version=2024-11-30' } }).includes('analyzeResults/abc'), 'Azure: Ergebnisadresse aus Header');
+ok(ev(wf7, 'If4', ['conditions', 'conditions', 0, 'leftValue'], {}, { operation_url: 'https://evil.example.com/x' }) === false, 'Azure: fremde Ergebnisadresse wird abgelehnt');
+const fin3 = ev(wf7, 'Edit Fields7', ['jsonOutput'], { 'Edit Fields': [[[sel]]], 'Edit Fields2': [[[{ renderer_fehler: 'Renderer-Fehler: 500' }]]] }, { abschnitte: [{ fundstelle: 'Seite 1', text: 'A' }], extraktion: 'n8n' });
+ok(/Renderer-Fehler: 500 – Ersatzweg genutzt/.test(fin3.hinweis) && fin3.abschnitte_anzahl === 1, 'Renderer-Ausfall wird im Ergebnis vermerkt');
+ok(ev(wf7, 'HTTP Request1', ['headerParameters', 'parameters', 0, 'value'], {}, { endung: 'pptx' }).includes('presentationml'), 'Azure: Content-Type je Dateityp');
 
 // ---------------------------------------------------------------- WF8
 console.log('WF8 PPTX ohne Renderer');
@@ -152,6 +169,17 @@ const brt = ev(wf10, 'Edit Fields7', ['jsonOutput'], { 'Edit Fields1': [[[ausw]]
 ok(brt.eingelesen === 1 && /Zu groß/.test(brt.bericht) && /reference: 1 Quellen, 12 Abschnitte/.test(brt.bericht), 'Bericht mit Ergebnis, Größenliste und DB-Stand');
 const meta10 = wf10.nodes.find(n => n.name === 'Default Data Loader').parameters.options.metadata.metadataValues;
 ok(meta10.some(m => m.name === 'embedding_model' && m.value === 'text-embedding-3-small') && meta10.every(m => !/Edit Fields2/.test(m.value)), 'Loader-Metadaten inkl. embedding_model, aus Edit Fields3');
+
+console.log('WF11 Systemcheck');
+const wf11 = load('11_ECOMEX_Systemcheck.json');
+const C0 = "Call 'ECOMEX 0 | Regelwerk & Katalog laden'", C7 = "Call 'ECOMEX 7 | Text extrahieren'";
+const okRun = { [C0]: [[[{ konfig: { renderer_aktiv: false, renderer_status: 'kein Renderer', azure_aktiv: true, katalog_quelle: 'GitHub' }, regelwerk_ok: true, regeln: { a: 1, b: 2 }, katalog: { layouts: new Array(24) } }]]],
+  'HTTP Request': [[[{ review_status: 'reference', quellen: 3, chunks: 40 }]]], 'HTTP Request1': [[[{ data: [] }]]], 'HTTP Request2': [[[{ value: [] }]]],
+  'HTTP Request3': [[[{ error: 'x' }]]], [C7]: [[[{ abschnitte_anzahl: 2, extraktion: 'n8n' }]]], 'Basic LLM Chain': [[[{ text: 'OK' }]]], 'Basic LLM Chain1': [[[{ text: 'OK' }]]], 'Supabase Vector Store': [[[{}]]] };
+const sc = ev(wf11, 'Edit Fields3', ['jsonOutput'], okRun, {});
+ok(sc.alles_bereit === true && /Alles bereit/.test(sc.bericht), 'Systemcheck: alles grün → „Alles bereit“');
+const sc2 = ev(wf11, 'Edit Fields3', ['jsonOutput'], { ...okRun, 'HTTP Request': [[[{ error: { message: 'Could not find the function public.ecomex_kb_status' } }]]], 'Basic LLM Chain1': [[[{ pruefung: 'openai' }]]] }, {});
+ok(sc2.offen === 2 && /003_content_factory_betrieb/.test(sc2.bericht) && /OpenAI/.test(sc2.bericht), 'Systemcheck: fehlende SQL-Funktion + OpenAI-Credential mit Handlungsanweisung');
 
 console.log('Struktur: Dateien gehen nicht verloren');
 const keeps = (wf, name) => { const n = wf.nodes.find(x => x.name === name); return n.parameters.includeOtherFields === true && !(n.parameters.options || {}).stripBinary; };

@@ -260,7 +260,7 @@
         1320,
         0
       ],
-      "notes": "ENTWURF entfernen, Version setzen",
+      "notes": "ENTWURF entfernen, Version setzen\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
       "notesInFlow": true,
       "onError": "continueErrorOutput"
     },
@@ -514,7 +514,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

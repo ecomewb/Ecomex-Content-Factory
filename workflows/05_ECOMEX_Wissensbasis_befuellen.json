@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## ECOMEX 5 · Wissensbasis befüllen (eine Datei)\nEine Fachquelle per Formular durchsuchbar machen. Für die ganze Supabase-Ablage: **ECOMEX 10**.\n\n1. Konfiguration aus ECOMEX 0 (Renderer da?).\n2. SHA-256 der Datei → schon vorhanden? Dann Stopp.\n3. Text mit Fundstellen über **ECOMEX 7** (Renderer oder n8n).\n4. Original in die Supabase-Ablage (`Uploads/`), Quelle in `ecomex_sources`, Abschnitte in `ecomex_documents`.\n\nStatus *reference* = Agenten dürfen nutzen, ist aber keine fachliche Freigabe. *restricted* wird von den Agenten nie gefunden.\nCredentials: Supabase (in *Get many rows*, *HTTP Request*, *Create a row*, *Supabase Vector Store*), OpenAI (Embeddings).",
+        "content": "## ECOMEX 5 · Wissensbasis befüllen (eine Datei)\nEine Fachquelle per Formular durchsuchbar machen. Für die ganze Supabase-Ablage: **ECOMEX 10**.\n\n1. Konfiguration aus ECOMEX 0 (Renderer da?).\n2. SHA-256 der Datei → schon vorhanden? Dann Stopp.\n3. Text mit Fundstellen über **ECOMEX 7** (Renderer, n8n oder Azure).\n4. Original in die Supabase-Ablage (`Uploads/`), Quelle in `ecomex_sources`, Abschnitte in `ecomex_documents`.\n\nStatus *reference* = Agenten dürfen nutzen, ist aber keine fachliche Freigabe. *restricted* wird von den Agenten nie gefunden.\nCredentials: Supabase (in *Get many rows*, *HTTP Request*, *Create a row*, *Supabase Vector Store*), OpenAI (Embeddings).",
         "height": 520,
         "width": 500,
         "color": 4
@@ -21,7 +21,7 @@
       "parameters": {
         "authentication": "n8nUserAuth",
         "formTitle": "ECOMEX · Fachquelle in die Wissensbasis",
-        "formDescription": "Ohne Renderer lesbar: PDF, Excel, CSV, Markdown/Text. Mit Renderer zusätzlich PowerPoint und Word. Ein Import ist keine fachliche Freigabe.",
+        "formDescription": "Lesbar: PDF, PowerPoint, Word, Excel, CSV, Markdown/Text (PowerPoint/Word über Renderer oder Azure Document Intelligence). Ein Import ist keine fachliche Freigabe.",
         "formFields": {
           "values": [
             {
@@ -296,7 +296,7 @@
         1100,
         200
       ],
-      "notes": "schon in der Wissensbasis?",
+      "notes": "schon in der Wissensbasis?\n🔑 Supabase",
       "notesInFlow": true,
       "alwaysOutputData": true
     },
@@ -499,7 +499,7 @@
         2420,
         200
       ],
-      "notes": "Original in die Supabase-Ablage",
+      "notes": "Original in die Supabase-Ablage\n🔑 Supabase",
       "notesInFlow": true,
       "onError": "continueRegularOutput"
     },
@@ -587,7 +587,32 @@
         2860,
         200
       ],
-      "notes": "Quelle registrieren",
+      "notes": "Quelle registrieren\n🔑 Supabase",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "951b40df-ecca-5bf5-8557-7f7d9bedd5cd",
+              "name": "abschnitte",
+              "value": "={{ $('Edit Fields2').first().json.abschnitte }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "97e191a5-8b49-51d7-961d-19f278421601",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3080,
+        200
+      ],
+      "notes": "Abschnitte (nach dem Registrieren)",
       "notesInFlow": true
     },
     {
@@ -601,7 +626,7 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        3080,
+        3300,
         200
       ],
       "notes": "ein Item pro Folie/Seite/Abschnitt",
@@ -624,10 +649,10 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1.3,
       "position": [
-        3320,
+        3540,
         200
       ],
-      "notes": "durchsuchbar speichern",
+      "notes": "durchsuchbar speichern\n🔑 Supabase",
       "notesInFlow": true
     },
     {
@@ -687,7 +712,7 @@
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1.1,
       "position": [
-        3340,
+        3560,
         440
       ]
     },
@@ -702,7 +727,7 @@
       "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
       "typeVersion": 1,
       "position": [
-        3400,
+        3620,
         640
       ]
     },
@@ -716,9 +741,11 @@
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
       "position": [
-        3200,
+        3420,
         440
-      ]
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -737,7 +764,7 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        3560,
+        3780,
         200
       ]
     },
@@ -754,7 +781,7 @@
       "type": "n8n-nodes-base.form",
       "typeVersion": 2.5,
       "position": [
-        3780,
+        4000,
         200
       ],
       "webhookId": "5313b5a0-7929-56e3-99e9-65863273d66e"
@@ -970,6 +997,17 @@
       "main": [
         [
           {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
             "node": "Split Out",
             "type": "main",
             "index": 0
@@ -1023,7 +1061,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

@@ -114,7 +114,7 @@
         460,
         440
       ],
-      "notes": "interne Fundstellen (RAG)",
+      "notes": "interne Fundstellen (RAG)\n🔑 Supabase",
       "notesInFlow": true,
       "onError": "continueRegularOutput",
       "alwaysOutputData": true
@@ -131,7 +131,9 @@
       "position": [
         480,
         660
-      ]
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -234,7 +236,9 @@
       "position": [
         1100,
         680
-      ]
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -301,7 +305,9 @@
       "position": [
         1440,
         680
-      ]
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -368,7 +374,9 @@
       "position": [
         1780,
         680
-      ]
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -439,7 +447,9 @@
       "position": [
         2120,
         680
-      ]
+      ],
+      "notes": "🔑 OpenAI (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -542,7 +552,9 @@
       "position": [
         2600,
         80
-      ]
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -926,7 +938,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

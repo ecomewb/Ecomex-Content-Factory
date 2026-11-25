@@ -136,8 +136,11 @@
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/files",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "anthropicApi",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 300000
+        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -146,9 +149,6 @@
               "value": "={{ $json.konfig.anthropic_version }}"
             }
           ]
-        },
-        "options": {
-          "timeout": 300000
         },
         "sendBody": true,
         "contentType": "multipart-form-data",
@@ -170,7 +170,7 @@
         880,
         200
       ],
-      "notes": "Master hochladen",
+      "notes": "Master hochladen\n🔑 Header Auth: Anthropic",
       "notesInFlow": true
     },
     {
@@ -266,7 +266,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

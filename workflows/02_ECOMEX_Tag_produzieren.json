@@ -190,7 +190,7 @@
         1560,
         60
       ],
-      "notes": "Prüfbericht (deterministisch)",
+      "notes": "Prüfbericht (deterministisch)\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
       "notesInFlow": true,
       "onError": "continueErrorOutput"
     },
@@ -221,7 +221,7 @@
         1780,
         60
       ],
-      "notes": "PPTX im Originalmaster",
+      "notes": "PPTX im Originalmaster\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
       "notesInFlow": true,
       "onError": "continueErrorOutput"
     },
@@ -252,7 +252,7 @@
         2000,
         -60
       ],
-      "notes": "PDF-Vorschau",
+      "notes": "PDF-Vorschau\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
       "notesInFlow": true,
       "onError": "continueRegularOutput"
     },
@@ -299,7 +299,7 @@
         2440,
         -60
       ],
-      "notes": "Visuelle QA (Claude sieht die Folien)",
+      "notes": "Visuelle QA (Claude sieht die Folien)\n🔑 Anthropic (KI-Credential)",
       "notesInFlow": true,
       "onError": "continueRegularOutput",
       "retryOnFail": true,
@@ -501,7 +501,7 @@
     {
       "parameters": {
         "operation": "toJson",
-        "mode": "once",
+        "mode": "each",
         "binaryPropertyName": "data",
         "options": {
           "fileName": "={{ $('Edit Fields1').first().json.deck.meta.dateiname + '_Deckdaten.json' }}"
@@ -988,7 +988,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

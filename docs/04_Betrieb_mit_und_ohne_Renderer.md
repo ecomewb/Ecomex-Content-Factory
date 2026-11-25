@@ -1,6 +1,6 @@
 # 04 · n8n-Workflows: Einrichtung, Betrieb mit und ohne Renderer
 
-Stand: Content Factory v0.2 · n8n ab 2.46 · Supabase-Projekt *Ecomex-Content-Factory*
+Stand: Content Factory v0.3 · n8n ab 2.46 · Supabase-Projekt *Ecomex-Content-Factory*
 
 Die Workflows funktionieren **mit und ohne Renderer**. Ob der Renderer läuft, prüft ECOMEX 0 bei jedem Lauf
 (`GET /health`, 8 Sekunden). Ist er nicht erreichbar oder fällt er mitten im Lauf aus, nimmt jeder Workflow
@@ -21,12 +21,13 @@ automatisch den Ersatzweg. Niemand muss etwas umschalten.
 | 8 | PPTX ohne Renderer (Claude) | wird aufgerufen | Ersatz-PPTX über den Claude-PPTX-Skill |
 | 9 | Master an Claude übergeben | Formular, einmalig | Folienmaster für Workflow 8 hochladen |
 | 10 | Ablage einlesen (Supabase) | manuell / nachts | alle neuen Dateien aus dem Bucket in die Wissensbasis |
+| 11 | Systemcheck | manuell | prüft alle Zugänge, Datenbank, Regelwerk und KI in ~30 s und sagt, was zu tun ist |
 
 ## 2. Was mit und ohne Renderer passiert
 
 | Schritt | mit Renderer | ohne Renderer (automatisch) |
 |---|---|---|
-| Vorlage lesen (WF 1, 5, 10) | PDF, PPTX, Word, Excel, Markdown | PDF (je Seite), Excel/CSV, Markdown/Text. **PPTX/Word → bitte als PDF speichern** |
+| Vorlage lesen (WF 1, 5, 10) | PDF, PPTX (inkl. Sprechernotizen), Word, Excel, Markdown | n8n: PDF (je Seite), Excel/CSV, Markdown/Text. **Azure Document Intelligence:** PPTX (je Folie), Word, Bilder und gescannte PDFs. Ohne Azure: PPTX/Word als PDF speichern |
 | PowerPoint erzeugen (WF 2, 4) | im ECOMEX-Originalmaster, deterministisch | über **ECOMEX 8**: Claude baut die PPTX mit dem PPTX-Skill, mit Master, wenn über ECOMEX 9 hinterlegt |
 | PDF-Vorschau + visuelle KI-Prüfung | ja | nein – Folien in PowerPoint sichten |
 | Automatische Layoutprüfung (Überläufe …) | ja | nein – QA-Bericht weist darauf hin |
@@ -44,19 +45,28 @@ nicht freigegeben ist).
    Supabase-SQL-Editor ausführen (bereits erledigt im Projekt *Ecomex-Content-Factory*; beide Skripte
    sind wiederholbar).
 2. **Import:** in n8n alle Dateien aus `workflows/` importieren (*Workflows → Import from File*), in der
-   Reihenfolge 0, 7, 8, 3, 2, 1, 4, 5, 6, 9, 10. Namen nicht ändern.
+   Reihenfolge 0, 7, 8, 3, 2, 1, 4, 5, 6, 9, 10, 11. Namen nicht ändern. Bereits importierte ältere
+   Fassungen (v5) vorher löschen oder umbenennen, damit die *Call*-Nodes den richtigen Workflow finden.
 3. **Unterworkflows verknüpfen:** In jedem Node *Call '…'* bei *Workflow → From list* den gleichnamigen
-   Workflow auswählen (14 Stellen; `python3 tools/pruefe_workflows.py` listet sie).
-4. **Credentials** anlegen und in den markierten Nodes auswählen:
+   Workflow auswählen (16 Stellen; `python3 tools/pruefe_workflows.py` listet sie).
+4. **Credentials** auswählen. Jeder Node, der Zugangsdaten braucht, trägt auf der Arbeitsfläche einen
+   Hinweis **🔑 …** – dort das passende Credential wählen:
 
-   | Credential | Typ in n8n | genutzt in |
-   |---|---|---|
-   | GitHub | GitHub API (Token mit Leserecht auf das Repo) | WF 0 |
-   | Supabase | Supabase API (Projekt-URL + **secret/service_role key**) | WF 3, 5, 10 |
-   | OpenAI | OpenAI | WF 3 (Recherche/QA-Modelle), WF 3, 5, 10 (Embeddings) |
-   | Anthropic | Anthropic | WF 1, 3 (Agenten), WF 2 (visuelle Prüfung), WF 8, 9 (HTTP Request) |
-   | ECOMEX Renderer | Header Auth, Name `X-API-Key`, Wert = `RENDERER_API_KEY` | WF 0, 2, 4, 6, 7 – auch anlegen, wenn der Renderer noch fehlt |
-   | SharePoint, SMTP | optional, Nodes sind deaktiviert | WF 2, 6 |
+   | 🔑 Hinweis im Node | Credential-Typ in n8n | Inhalt | genutzt in |
+   |---|---|---|---|
+   | Header Auth: Anthropic | Header Auth | Name `x-api-key`, Wert = Anthropic-API-Key | WF 8, 9, 11 (Claude-PPTX-Skill, Master-Upload) |
+   | Header Auth: Azure Document Intelligence | Header Auth | Name `Ocp-Apim-Subscription-Key`, Wert = Azure-Schlüssel | WF 7, 11 |
+   | Header Auth: ECOMEX Renderer | Header Auth | Name `X-API-Key`, Wert = `RENDERER_API_KEY` | WF 0, 2, 4, 6, 7, 11 – solange kein Renderer läuft, ein Credential mit beliebigem Wert anlegen |
+   | Anthropic (KI-Credential) | **Anthropic** | API-Key | Chat-Model-Nodes in WF 1, 3, *Analyze document* in WF 2, WF 11 |
+   | OpenAI (KI-Credential) | **OpenAI** | API-Key | Recherche/QA-Modelle in WF 3, *Embeddings OpenAI* in WF 3, 5, 10, 11 |
+   | Supabase | Supabase API | Host `https://bymgndzxyzepzuqnceyt.supabase.co` + secret/service_role key | WF 3, 5, 10, 11 |
+   | GitHub | GitHub API | Token mit Leserecht auf das Repo | WF 0 |
+   | SharePoint, SMTP | – | optional, Nodes sind deaktiviert | WF 2, 6 |
+
+   **Wichtig:** Die Header-Credentials gelten nur für *HTTP Request*-Nodes. Die KI-Bausteine von n8n
+   (*Anthropic Chat Model*, *OpenAI Chat Model*, *Embeddings OpenAI*, *Analyze document*) akzeptieren nur die
+   Credential-Typen **Anthropic** bzw. **OpenAI** – einmal mit demselben API-Key anlegen. Der vorhandene
+   OpenAI-Header wird nicht benötigt.
 
    Die Agenten bekommen **kein** Datenbank-Werkzeug: Die Suche in der Wissensbasis ist ein fester
    Schritt in WF 3, den das Modell nicht steuern kann. Der Service-Key bleibt damit außerhalb der
@@ -66,7 +76,8 @@ nicht freigegeben ist).
    (Freigabe-Häkchen erforderlich) und die angezeigte `file_id` in ECOMEX 0 › `claude_master_file_id` eintragen.
 7. **Wissensbasis füllen:** ECOMEX 10 zuerst mit `probelauf: true` ausführen, Bericht prüfen, dann mit
    `probelauf: false`.
-8. **Prüfen:** `python3 tools/pruefe_workflows.py workflows/*.json` → *0 Fehler*.
+8. **Systemcheck:** ECOMEX 11 öffnen → *Execute workflow* → Ergebnis im letzten Node (*Edit Fields3*, Feld
+   `bericht`). Jede Zeile mit ✖ nennt die Ursache und was zu tun ist. Erst wenn alles ✔ ist, mit ECOMEX 1 starten.
 
 ## 4. Einstellungen (ECOMEX 0 › Edit Fields)
 
@@ -82,6 +93,8 @@ nicht freigegeben ist).
 | `claude_pptx_modell` | claude-sonnet-5-5 | Modell für ECOMEX 8 |
 | `claude_master_file_id` | leer | aus ECOMEX 9; leer = Claude baut ohne Master in ECOMEX-Farben |
 | `anthropic_version`, `code_execution_tool` | 2026-10-21 / code_execution_20260521 | API-Stand für den PPTX-Skill; nur bei API-Änderungen anpassen |
+| `azure_di_endpoint` | https://ecomex-doc-intelligence.cognitiveservices.azure.com | Azure Document Intelligence für PPTX/Word/Scans ohne Renderer; **leer = Azure aus** |
+| `azure_di_api_version` | 2024-11-30 | Modell `prebuilt-layout`, Ausgabe als Markdown (Tabellen bleiben erhalten) |
 
 ## 5. Wissensbasis (Supabase)
 
@@ -113,7 +126,7 @@ Die Workflows dürfen in n8n weiterentwickelt werden. Diese Punkte halten das Zu
    | Workflow | erwartet | liefert |
    |---|---|---|
    | ECOMEX 0 | beliebige Felder; `nur_konfig: true` = schnell | alle Eingangsfelder + `konfig` {…Einstellungen, `renderer_aktiv`, `renderer_status`}; ohne `nur_konfig` zusätzlich `regeln`, `regel_versionen`, `katalog` |
-   | ECOMEX 7 | Datei im Binärfeld `datei`, `konfig` | `abschnitte[{fundstelle,text}]`, `text`, `zeichen`, `source_type` (pdf/pptx/docx/md/other), `hinweis`, `extraktion` |
+   | ECOMEX 7 | Datei im Binärfeld `datei`, `konfig` | `abschnitte[{fundstelle,text}]`, `text`, `zeichen`, `source_type` (pdf/pptx/docx/md/other), `hinweis`, `extraktion` (renderer/n8n/azure) |
    | ECOMEX 8 | `deck`, `konfig`, `design_regeln`, `katalog` | Binärfeld `pptx` (falls erzeugt), `pptx_quelle` (claude/keine), `hinweis`, `master_verwendet` |
    | ECOMEX 3 | `zeile`, `tagesuebersicht`, `regeln`, `katalog`, `konfig`, optional `revision` | `folien[]`, `qa`, `quellen` |
 
@@ -127,15 +140,19 @@ Die Workflows dürfen in n8n weiterentwickelt werden. Diese Punkte halten das Zu
    kaputte `{{ }}`, fehlende Einstellungen und entfernte End-Nodes. Danach die Exporte nach `workflows/`
    committen – **der Export aus n8n ist ab dann die maßgebliche Fassung**; `tools/generator/` dient nur
    dem Neuaufbau.
-7. **Ausdrucks-Tests (optional, für Entwickler):** `cd tools/tests && npm install --ignore-scripts &&
-   node test_workflows.js` prüft die wichtigsten Ausdrücke mit der echten n8n-Engine.
+7. **Tests (optional, für Entwickler):**
+   - `cd tools/tests && npm install --ignore-scripts && node test_workflows.js` – wichtigste Ausdrücke mit der n8n-Engine.
+   - `tools/tests/integration/` – führt alle 12 Workflows mit der echten n8n-2.46-Engine aus (externe Dienste
+     simuliert, Renderer lokal), 60 Fälle inkl. Ausfällen; Anleitung im dortigen README.
 
 ## 7. Häufige Meldungen
 
 | Meldung | Ursache | Lösung |
 |---|---|---|
 | QA-Bericht: „Renderer nicht erreichbar – Weg ohne Renderer (…ENOTFOUND…)“ | Renderer-Container läuft nicht / anderes Docker-Netz | `docker compose up -d` im Ordner `renderer/`; Netzname prüfen |
-| „Dateityp .pptx kann ohne Renderer nicht gelesen werden“ | kein Renderer | Datei als PDF speichern oder Renderer starten |
+| „Dateityp .pptx kann ohne Renderer nicht gelesen werden“ | weder Renderer noch Azure | Datei als PDF speichern, Azure-Endpoint eintragen oder Renderer starten |
+| „Azure Document Intelligence konnte die Datei nicht lesen …“ | Datei beschädigt, Schlüssel falsch, Limit | Systemcheck ausführen; Free-Tarif liest nur 4 MB / 2 Seiten |
+| Node rot: „Credentials not found“ / „Node does not have any credentials set“ | Credential im Node nicht gewählt | im Node das Credential laut 🔑-Hinweis wählen |
 | „Claude hat keine PowerPoint-Datei geliefert“ | Zeitlimit/Überlast beim Ersatzweg | Lauf wiederholen; Manuskript nutzen; Renderer bevorzugen |
 | „Katalog im Renderer (v…) weicht von GitHub (v…) ab“ | Katalog geändert, Renderer nicht neu gebaut | `docker compose up -d --build` |
 | „Regelwerk unvollständig …“ | Pflicht-`.md` fehlt/umbenannt im Regel-Ordner | Dateien in `governance/` prüfen |

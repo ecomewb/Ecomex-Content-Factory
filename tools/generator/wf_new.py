@@ -12,7 +12,8 @@ def build_wf0():
              "1. **HTTP Request** prüft `/health` des Renderers. Nicht erreichbar → alle Workflows nehmen automatisch den Weg ohne Renderer.\n"
              "2. Aufrufe mit `nur_konfig: true` (Wissensbasis, Ablage, Freigabe) enden hier.\n"
              "3. Sonst: alle `.md`-Regeln aus `governance/` und den Layoutkatalog aus GitHub laden (Katalog notfalls vom Renderer).\n\n"
-             "Credentials: GitHub in *List files*, *Get a file*, *Get a file1*; Header-Auth *ECOMEX Renderer* (`X-API-Key`) in *HTTP Request1*.",
+             "Credentials: GitHub in *List files*, *Get a file*, *Get a file1*; Header Auth *ECOMEX Renderer* in *HTTP Request1* (nur mit Renderer).\n"
+             "Prüfen: **ECOMEX 11 | Systemcheck** ausführen.",
              [-560, -160], 500, 560, 4)
     w.node(TRIG, "n8n-nodes-base.executeWorkflowTrigger", 1.1, {"inputSource": "passthrough"}, [0, 200])
     w.node("Edit Fields", "n8n-nodes-base.set", 3.4, set_params([
@@ -30,6 +31,8 @@ def build_wf0():
         assign("claude_master_file_id", ""),
         assign("anthropic_version", "2026-10-21"),
         assign("code_execution_tool", "code_execution_20260521"),
+        assign("azure_di_endpoint", "https://ecomex-doc-intelligence.cognitiveservices.azure.com"),
+        assign("azure_di_api_version", "2024-11-30"),
     ]), [240, 200], "EINSTELLUNGEN (einziger Ort)")
     w.node("HTTP Request", "n8n-nodes-base.httpRequest", 4.2, {
         "method": "GET",
@@ -45,6 +48,8 @@ def build_wf0():
   const konfig = { ...c,
     renderer_url: String(c.renderer_url || '').trim().replace(/\/+$/, ''),
     supabase_url: String(c.supabase_url || '').trim().replace(/\/+$/, ''),
+    azure_di_endpoint: String(c.azure_di_endpoint || '').trim().replace(/\/+$/, ''),
+    azure_aktiv: !!String(c.azure_di_endpoint || '').trim(),
     renderer_aktiv: aktiv,
     renderer_status: aktiv ? ('Renderer erreichbar · Master: ' + body.master + (body.demo_master ? ' (DEMO – Originalmaster fehlt!)' : '')) : ('Renderer nicht erreichbar – Weg ohne Renderer (' + grund + ')'),
     renderer_master: body.master || '', renderer_demo_master: !!body.demo_master, renderer_katalog_version: body.katalog_version || '',
@@ -58,7 +63,8 @@ def build_wf0():
     w.node("List files", "n8n-nodes-base.github", 1.1, {
         "resource": "file", "operation": "list",
         "owner": rl_name("={{ $json.konfig.github_owner }}"), "repository": rl_name("={{ $json.konfig.github_repo }}"),
-        "filePath": "={{ $json.konfig.regel_ordner }}"}, [1200, 300], "Regel-Ordner in GitHub auflisten")
+        "filePath": "={{ $json.konfig.regel_ordner }}"}, [1200, 300], "Regel-Ordner in GitHub auflisten",
+        onError="continueRegularOutput", alwaysOutputData=True)
     w.node("Filter", "n8n-nodes-base.filter", 2.2, filter_params([
         cond("={{ $json.type }}", "string", "equals", "file"),
         cond("={{ $json.name }}", "string", "endsWith", ".md")]), [1420, 300], "nur Markdown-Regeln",
@@ -84,8 +90,9 @@ def build_wf0():
         "filePath": "={{ " + gh + ".katalog_pfad }}", "asBinaryProperty": False,
         "additionalParameters": {"reference": "={{ " + gh + ".branch }}"}},
         [2300, 300], "Layoutkatalog aus GitHub", onError="continueRegularOutput", alwaysOutputData=True)
-    w.node("If1", "n8n-nodes-base.if", 2.2, filter_params([cond("={{ !!$json.content }}", "boolean", "true", single=True)]),
-           [2520, 300], "Katalog in GitHub gefunden?")
+    w.node("If1", "n8n-nodes-base.if", 2.2, filter_params([
+        cond("={{ !!$json.content || !$('Edit Fields1').first().json.konfig.renderer_aktiv }}", "boolean", "true", single=True)]),
+           [2520, 300], "Katalog aus GitHub (oder kein Renderer)?")
     http_renderer(w, "HTTP Request1", "/katalog", [2740, 420], "Ersatz: Katalog vom Renderer", method="GET",
                   base="$('Edit Fields1').first().json.konfig.renderer_url", timeout=30000)
     w.nodes[-1]["onError"] = "continueRegularOutput"
@@ -100,21 +107,31 @@ def build_wf0():
   konfig.katalog_quelle = quelle || 'nicht gefunden';
   konfig.katalog_warnung = konfig.renderer_aktiv && konfig.renderer_katalog_version && kat.version && String(konfig.renderer_katalog_version) !== String(kat.version)
     ? ('Katalog im Renderer (v' + konfig.renderer_katalog_version + ') weicht von GitHub (v' + kat.version + ') ab – Renderer neu bauen.') : '';
+  const pflicht = ['curriculum.md','didaktik.md','design.md','qa_rules.md','content_workflow.md'];
+  const regeln = Object.fromEntries(dateien.map(r => [r.datei, r.text]));
+  const fehlend = pflicht.filter(d => String(regeln[d] || '').length <= 200);
+  const lf = $('List files').first().json || {};
+  const gh = lf.error ? String(lf.error.message || lf.error.description || lf.error).slice(0, 200) : '';
+  const fehler = [];
+  if (gh) fehler.push('GitHub nicht erreichbar (Credential/Repo/Ordner prüfen): ' + gh);
+  if (fehlend.length) fehler.push('Pflichtregeln fehlen oder zu kurz in ' + konfig.regel_ordner + ': ' + fehlend.join(', ') + ' | gefunden: ' + (Object.keys(regeln).join(', ') || 'nichts'));
+  if ((kat.layouts || []).length < 10) fehler.push('Layoutkatalog nicht gefunden (' + konfig.katalog_pfad + '), ' + (kat.layouts || []).length + ' Layouts');
   return { ...basis, konfig,
-    regeln: Object.fromEntries(dateien.map(r => [r.datei, r.text])),
+    regelwerk_ok: fehler.length === 0, regelwerk_fehler: fehler.join(' · '),
+    regeln,
     regel_versionen: dateien.map(r => ({ datei: r.datei, sha: String(r.sha).slice(0, 7) })),
     katalog: { version: kat.version, regeln_fuer_agenten: kat.regeln_fuer_agenten || [], layouts: kat.layouts || [] },
     regelwerk_geladen_am: $now.toISO() };
 })() }}"""), [2960, 300], "Regelwerk + Katalog + Konfiguration")
-    w.node("If2", "n8n-nodes-base.if", 2.2, filter_params([
-        cond("={{ ['curriculum.md','didaktik.md','design.md','qa_rules.md','content_workflow.md'].every(d => String(($json.regeln || {})[d] || '').length > 200) }}",
-             "boolean", "true", single=True),
-        cond("={{ ($json.katalog.layouts || []).length }}", "number", "gte", 10)]), [3180, 300],
-        "Pflichtregeln + Katalog vollständig?")
-    w.node("No Operation, do nothing1", "n8n-nodes-base.noOp", 1, {}, [3420, 200], "Ergebnis an Aufrufer")
+    w.node("If2", "n8n-nodes-base.if", 2.2, filter_params([cond("={{ $json.regelwerk_ok }}", "boolean", "true", single=True)]),
+           [3180, 300], "Regelwerk + Katalog vollständig?")
+    w.node("If3", "n8n-nodes-base.if", 2.2, filter_params([
+        cond("={{ $json.pruefmodus === true || $json.pruefmodus === 'true' }}", "boolean", "true", single=True)]),
+        [3400, 420], "Aufruf aus dem Systemcheck?")
+    w.node("No Operation, do nothing1", "n8n-nodes-base.noOp", 1, {}, [3640, 200], "Ergebnis an Aufrufer")
     w.node("Stop and Error", "n8n-nodes-base.stopAndError", 1, {
-        "errorMessage": "={{ 'Regelwerk unvollständig. Fehlend/zu kurz: ' + ['curriculum.md','didaktik.md','design.md','qa_rules.md','content_workflow.md'].filter(d => String(($json.regeln || {})[d] || '').length <= 200).join(', ') + ' | Gefunden in ' + $json.konfig.regel_ordner + ': ' + Object.keys($json.regeln || {}).join(', ') + ' | Katalog: ' + $json.konfig.katalog_quelle + ', ' + ($json.katalog.layouts || []).length + ' Layouts' }}"},
-        [3420, 420], "sichtbarer Abbruch")
+        "errorMessage": "={{ 'ECOMEX 0: ' + $json.regelwerk_fehler + ' – Tipp: „ECOMEX 11 | Systemcheck“ ausführen.' }}"},
+        [3640, 520], "sichtbarer Abbruch")
     w.chain(TRIG, "Edit Fields", "HTTP Request", "Edit Fields1", "If")
     w.link("If", "No Operation, do nothing", 0)
     w.link("If", "List files", 1)
@@ -124,7 +141,9 @@ def build_wf0():
     w.link("HTTP Request1", "Edit Fields3")
     w.link("Edit Fields3", "If2")
     w.link("If2", "No Operation, do nothing1", 0)
-    w.link("If2", "Stop and Error", 1)
+    w.link("If2", "If3", 1)
+    w.link("If3", "No Operation, do nothing1", 0)
+    w.link("If3", "Stop and Error", 1)
     w.save(OUT / "00_ECOMEX_Regelwerk_und_Katalog_laden.json")
 
 
@@ -279,7 +298,7 @@ def build_wf2():
         "operation": "toText", "sourceProperty": "bericht", "binaryPropertyName": "data",
         "options": {"fileName": "={{ $json.dateiname }}"}}, [3320, 200], "Bericht als Datei")
     w.node("Convert to JSON", "n8n-nodes-base.convertToFile", 1.1, {
-        "operation": "toJson", "mode": "once", "binaryPropertyName": "data",
+        "operation": "toJson", "mode": "each", "binaryPropertyName": "data",
         "options": {"fileName": "={{ $('Edit Fields1').first().json.deck.meta.dateiname + '_Deckdaten.json' }}"}},
         [1340, 700], "Deckdaten (für Überarbeitung)")
     w.node("Edit Fields4", "n8n-nodes-base.set", 3.4, set_raw(MANUSKRIPT), [1340, 880], "Folien-Manuskript (HTML)")
@@ -365,7 +384,7 @@ def build_wf4():
         "operation": "fromJson", "binaryPropertyName": "deckdaten", "destinationKey": "daten", "options": {}},
         [220, 200])
     w.node("Edit Fields", "n8n-nodes-base.set", 3.4, set_params([
-        assign("deck", "={{ $json.daten.deck || $json.daten }}", "object"),
+        assign("deck", "={{ (d => d.deck || d)(Array.isArray($json.daten) ? ($json.daten[0] || {}) : ($json.daten || {})) }}", "object"),
         assign("aktion", "={{ $('On form submission').first().json.aktion }}"),
         assign("block", "={{ String($('On form submission').first().json.block || '').trim() }}"),
         assign("hinweise", "={{ $('On form submission').first().json.hinweise || '' }}"),
@@ -427,7 +446,7 @@ def build_wf4():
     ]), [2660, 340], "ohne PPTX weiter")
     w.node("No Operation, do nothing", "n8n-nodes-base.noOp", 1, {}, [2880, 120], "PPTX-Ergebnis (beide Wege)")
     w.node("Convert to JSON", "n8n-nodes-base.convertToFile", 1.1, {
-        "operation": "toJson", "mode": "once", "binaryPropertyName": "deck",
+        "operation": "toJson", "mode": "each", "binaryPropertyName": "deck",
         "options": {"fileName": "={{ ($json.deck.meta.dateiname || 'ECOMEX_Deck') + '_Deckdaten.json' }}"}},
         [2000, 520], "neue Deckdaten")
     w.node("Merge", "n8n-nodes-base.merge", 3.2, {"mode": "combine", "combineBy": "combineByPosition", "options": {}},
@@ -504,13 +523,13 @@ def build_wf5():
     w = WF("ECOMEX 5 | Wissensbasis befüllen")
     w.sticky("info", "## ECOMEX 5 · Wissensbasis befüllen (eine Datei)\nEine Fachquelle per Formular durchsuchbar machen. Für die ganze Supabase-Ablage: **ECOMEX 10**.\n\n"
              "1. Konfiguration aus ECOMEX 0 (Renderer da?).\n2. SHA-256 der Datei → schon vorhanden? Dann Stopp.\n"
-             "3. Text mit Fundstellen über **ECOMEX 7** (Renderer oder n8n).\n4. Original in die Supabase-Ablage (`Uploads/`), Quelle in `ecomex_sources`, Abschnitte in `ecomex_documents`.\n\n"
+             "3. Text mit Fundstellen über **ECOMEX 7** (Renderer, n8n oder Azure).\n4. Original in die Supabase-Ablage (`Uploads/`), Quelle in `ecomex_sources`, Abschnitte in `ecomex_documents`.\n\n"
              "Status *reference* = Agenten dürfen nutzen, ist aber keine fachliche Freigabe. *restricted* wird von den Agenten nie gefunden.\n"
              "Credentials: Supabase (in *Get many rows*, *HTTP Request*, *Create a row*, *Supabase Vector Store*), OpenAI (Embeddings).",
              [-560, -120], 500, 520, 4)
     w.node("On form submission", "n8n-nodes-base.formTrigger", 2.6, {
         "authentication": "n8nUserAuth", "formTitle": "ECOMEX · Fachquelle in die Wissensbasis",
-        "formDescription": "Ohne Renderer lesbar: PDF, Excel, CSV, Markdown/Text. Mit Renderer zusätzlich PowerPoint und Word. Ein Import ist keine fachliche Freigabe.",
+        "formDescription": "Lesbar: PDF, PowerPoint, Word, Excel, CSV, Markdown/Text (PowerPoint/Word über Renderer oder Azure Document Intelligence). Ein Import ist keine fachliche Freigabe.",
         "formFields": {"values": [
             form_field("Titel", "titel", required=True, placeholder="z. B. M02 Tag 11 – Prompt-Muster (Deck 2026-09)"),
             form_field("Version", "version", placeholder="z. B. 2026-11 / v1"),
@@ -601,16 +620,19 @@ def build_wf5():
             {"fieldId": "license_note", "fieldValue": "={{ $json.license_note || null }}"},
             {"fieldId": "notes", "fieldValue": "={{ $json.notiz }}"},
         ]}}, [2860, 200], "Quelle registrieren")
+    w.node("Edit Fields3", "n8n-nodes-base.set", 3.4, set_params([
+        assign("abschnitte", "={{ $('Edit Fields2').first().json.abschnitte }}", "array"),
+    ]), [3080, 200], "Abschnitte (nach dem Registrieren)")
     w.node("Split Out", "n8n-nodes-base.splitOut", 1, {"fieldToSplitOut": "abschnitte", "include": "noOtherFields", "options": {}},
-           [3080, 200], "ein Item pro Folie/Seite/Abschnitt")
-    kb_nodes(w, 3320, 200, LOADER_METADATA)
+           [3300, 200], "ein Item pro Folie/Seite/Abschnitt")
+    kb_nodes(w, 3540, 200, LOADER_METADATA)
     w.node("Aggregate", "n8n-nodes-base.aggregate", 1, {"aggregate": "aggregateIndividualFields",
                                                         "fieldsToAggregate": {"fieldToAggregate": [{"fieldToAggregate": "pageContent"}]},
-                                                        "options": {}}, [3560, 200])
+                                                        "options": {}}, [3780, 200])
     w.node("Form2", "n8n-nodes-base.form", 2.5, {
         "operation": "completion", "respondWith": "text", "completionTitle": "Import abgeschlossen",
         "completionMessage": "={{ $('Edit Fields2').first().json.abschnitte.length + ' Abschnitte (' + ($json.pageContent || []).length + ' Suchbausteine) aus „' + $('Edit Fields2').first().json.titel + '“ sind jetzt durchsuchbar (Quelle ' + $('Edit Fields2').first().json.source_id + ', Status ' + $('Edit Fields2').first().json.review_status + ', Ablage: ' + $('Edit Fields2').first().json.storage_uri + ').' }}",
-        "options": {}}, [3780, 200])
+        "options": {}}, [4000, 200])
     w.chain("On form submission", "Edit Fields", f"Call '{WF0}'")
     w.link(f"Call '{WF0}'", "Merge", 0, 0)
     w.link("Edit Fields", "Merge", 0, 1)
@@ -623,7 +645,7 @@ def build_wf5():
     w.link("Merge1", "Merge2", 0, 1)
     w.link("If1", "Form1", 1)
     w.chain("Merge2", "HTTP Request", "Edit Fields2", "Create a row")
-    w.link("Create a row", "Split Out")
+    w.chain("Create a row", "Edit Fields3", "Split Out")
     w.link("Split Out", "Supabase Vector Store")
     w.chain("Supabase Vector Store", "Aggregate", "Form2")
     w.save(OUT / "05_ECOMEX_Wissensbasis_befuellen.json")
@@ -707,114 +729,207 @@ def build_wf6():
 
 
 # =================================================================================================
-# ECOMEX 7 | Text extrahieren (Renderer oder n8n)
+# ECOMEX 7 | Text extrahieren (Renderer → n8n → Azure Document Intelligence)
 # =================================================================================================
 TEXT_ABSCHLUSS = r"""={{ (() => {
   const s = $('Edit Fields').first().json;
   const ab = ($json.abschnitte || []).filter(a => a && String(a.text || '').trim()).map(a => ({ fundstelle: String(a.fundstelle || ''), text: String(a.text).trim() }));
   const text = ab.map(a => '[' + a.fundstelle + ']\n' + a.text).join('\n\n');
   const map = { pdf: 'pdf', pptx: 'pptx', docx: 'docx', md: 'md', txt: 'md' };
+  const rf = $('Edit Fields2').isExecuted ? ($('Edit Fields2').first().json.renderer_fehler + ' – Ersatzweg genutzt. ') : '';
+  const h = String($json.hinweis || '');
   return { dateiname: s.dateiname, typ: s.endung, source_type: map[s.endung] || 'other', abschnitte: ab, abschnitte_anzahl: ab.length,
     text, zeichen: text.length, extraktion: $json.extraktion || 'n8n',
-    hinweis: $json.hinweis || (ab.length ? '' : 'Kein lesbarer Text gefunden (z. B. gescanntes PDF ohne Texterkennung).') };
+    hinweis: (rf + (h || (ab.length ? '' : 'Kein lesbarer Text gefunden (z. B. gescanntes PDF ohne Texterkennung).'))).trim() };
 })() }}"""
+
+AZURE_AUSWERTEN = r"""={{ (() => {
+  const r = $json.analyzeResult || {};
+  const s = $('Edit Fields').first().json;
+  const label = s.endung === 'pptx' ? 'Folie' : (s.endung === 'xlsx' ? 'Blatt' : 'Seite');
+  const alles = String(r.content || '');
+  const out = [];
+  (r.pages || []).forEach(p => {
+    const nr = Number(p.pageNumber);
+    let teile = (p.lines || []).map(l => String(l.content || '').trim()).filter(Boolean);
+    if (!teile.length && Array.isArray(p.spans)) teile = p.spans.map(sp => alles.slice(sp.offset, sp.offset + sp.length).trim()).filter(Boolean);
+    if (!teile.length) teile = (r.paragraphs || []).filter(x => (x.boundingRegions || []).some(b => b.pageNumber === nr)).map(x => String(x.content || '').trim()).filter(Boolean);
+    if (teile.length) out.push({ fundstelle: label + ' ' + nr, text: teile.join('\n') });
+  });
+  if (!out.length && alles.trim()) { for (let i = 0; i < alles.length; i += 4000) out.push({ fundstelle: 'Abschnitt ' + (out.length + 1), text: alles.slice(i, i + 4000) }); }
+  return { abschnitte: out, extraktion: 'azure',
+    hinweis: s.endung === 'pptx' ? 'Gelesen mit Azure Document Intelligence (Folientexte, ohne Sprechernotizen).' : '' };
+})() }}"""
+
+AZURE_FEHLER = r"""={{ (() => {
+  const j = $json || {};
+  const e = j.error;
+  const status = String(j.status || '');
+  const grund = e ? String(e.message || e.description || (e.code ? e.code : JSON.stringify(e))).slice(0, 250)
+    : (status === 'running' || status === 'notStarted') ? 'Zeitlimit überschritten – Azure analysiert noch'
+    : (status ? 'Status ' + status : 'keine Ergebnisadresse von Azure erhalten');
+  return { abschnitte: [], extraktion: 'azure',
+    hinweis: 'Azure Document Intelligence konnte die Datei nicht lesen (' + grund + '). Bitte als PDF speichern oder den Renderer nutzen.' };
+})() }}"""
+
+MIME = ("={{ ({ pdf: 'application/pdf', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation', "
+        "docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', "
+        "xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', html: 'text/html', jpg: 'image/jpeg', "
+        "jpeg: 'image/jpeg', png: 'image/png', bmp: 'image/bmp', tif: 'image/tiff', tiff: 'image/tiff' })[$json.endung] || 'application/octet-stream' }}")
 
 
 def build_wf7():
     w = WF(WF7)
-    w.sticky("info", "## ECOMEX 7 · Text extrahieren\nWird von ECOMEX 1, 5 und 10 aufgerufen. Erwartet die Datei im Binärfeld **datei** und `konfig` aus ECOMEX 0.\n\n"
-             "**Mit Renderer:** `/extract` – PPTX (Folie + Notizen), Word, Excel, PDF, Markdown mit Fundstellen.\n"
-             "**Ohne Renderer:** n8n-eigene Bausteine – PDF (je Seite), Excel/CSV (je 25 Zeilen), Markdown/Text (je Abschnitt).\n"
-             "PowerPoint und Word gehen ohne Renderer nicht → bitte als PDF speichern.\n\n"
-             "Ergebnis immer gleich: `abschnitte[{fundstelle,text}]`, `text`, `zeichen`, `source_type`, `hinweis`.",
-             [-560, -100], 500, 460, 4)
+    w.sticky("info", "## ECOMEX 7 · Text extrahieren\nWird von ECOMEX 1, 5, 10 und 11 aufgerufen. Erwartet die Datei im Binärfeld **datei** und `konfig` aus ECOMEX 0.\n\n"
+             "Reihenfolge – automatisch:\n"
+             "1. **Renderer** (`/extract`): PPTX inkl. Sprechernotizen, Word, Excel, PDF, Markdown.\n"
+             "2. **n8n**: PDF (je Seite), Excel/CSV (je 25 Zeilen), Markdown/Text (je Abschnitt).\n"
+             "3. **Azure Document Intelligence**: PowerPoint, Word, Bilder und gescannte PDFs – nur wenn in ECOMEX 0 `azure_di_endpoint` gesetzt ist.\n\n"
+             "Fällt der Renderer aus, geht es mit 2/3 weiter. Ergebnis immer gleich: `abschnitte[{fundstelle,text}]`, `text`, `zeichen`, `source_type`, `hinweis`.",
+             [-600, -160], 540, 520, 4)
     w.node(TRIG, "n8n-nodes-base.executeWorkflowTrigger", 1.1, {"inputSource": "passthrough"}, [0, 300])
     w.node("Edit Fields", "n8n-nodes-base.set", 3.4, set_params([
         assign("dateiname", "={{ $json.dateiname || ($binary.datei && $binary.datei.fileName) || 'datei' }}"),
         assign("endung", "={{ String($json.dateiname || ($binary.datei && $binary.datei.fileName) || '').split('.').pop().toLowerCase() }}"),
         assign("renderer_aktiv", "={{ !!($json.konfig && $json.konfig.renderer_aktiv) }}", "boolean"),
+        assign("azure_aktiv", "={{ !!($json.konfig && $json.konfig.azure_aktiv) }}", "boolean"),
         assign("konfig", "={{ $json.konfig || {} }}", "object"),
     ], include_other=True), [220, 300], "Dateityp + Weg bestimmen (Datei bleibt erhalten)")
     w.node("If", "n8n-nodes-base.if", 2.2, filter_params([
         cond("={{ $json.renderer_aktiv }}", "boolean", "true", single=True),
         cond("={{ ['pdf','pptx','docx','xlsx','md','txt','csv'].includes($json.endung) }}", "boolean", "true", single=True)]),
         [440, 300], "Renderer nutzen?")
-    http_renderer(w, "HTTP Request", "/extract", [660, 140], "Renderer liest die Datei", multipart="datei", timeout=300000)
+    http_renderer(w, "HTTP Request", "/extract", [680, 120], "1 · Renderer liest die Datei", multipart="datei", timeout=300000)
     w.nodes[-1]["onError"] = "continueErrorOutput"
     w.node("Edit Fields1", "n8n-nodes-base.set", 3.4, set_params([
         assign("abschnitte", "={{ $json.abschnitte || [] }}", "array"),
         assign("hinweis", "={{ $json.hinweis || '' }}"),
         assign("extraktion", "renderer"),
-    ]), [880, 60], "Ergebnis (Renderer)")
+    ]), [920, 40], "Ergebnis (Renderer)")
     w.node("Edit Fields2", "n8n-nodes-base.set", 3.4, set_params([
-        assign("abschnitte", "={{ [] }}", "array"),
-        assign("hinweis", "={{ 'Renderer konnte die Datei nicht lesen: ' + String(($json.error && ($json.error.message || $json.error.description)) || $json.error || 'unbekannt').slice(0, 250) }}"),
-        assign("extraktion", "renderer"),
-    ]), [880, 220], "Renderer-Fehler")
+        assign("renderer_fehler", "={{ 'Renderer-Fehler: ' + String(($json.error && ($json.error.message || $json.error.description)) || $json.error || 'unbekannt').slice(0, 200) }}"),
+    ]), [920, 200], "Renderer-Fehler merken")
+    w.node("Merge", "n8n-nodes-base.merge", 3.2, {"mode": "chooseBranch", "chooseBranchMode": "waitForAll",
+                                                  "output": "specifiedInput", "useDataOfInput": 2},
+           [1160, 420], "weiter ohne Renderer (mit Datei)")
+    sw = lambda expr, key: {"conditions": filter_params([cond(expr, "boolean", "true", single=True)])["conditions"],
+                            "renameOutput": True, "outputKey": key}
     w.node("Switch", "n8n-nodes-base.switch", 3.2, {
         "rules": {"values": [
-            {"conditions": filter_params([cond("={{ $json.endung }}", "string", "equals", "pdf")])["conditions"],
-             "renameOutput": True, "outputKey": "PDF"},
-            {"conditions": filter_params([cond("={{ ['xlsx','xls','ods'].includes($json.endung) }}", "boolean", "true", single=True)])["conditions"],
-             "renameOutput": True, "outputKey": "Excel"},
-            {"conditions": filter_params([cond("={{ $json.endung }}", "string", "equals", "csv")])["conditions"],
-             "renameOutput": True, "outputKey": "CSV"},
-            {"conditions": filter_params([cond("={{ ['md','txt','html','htm','json'].includes($json.endung) }}", "boolean", "true", single=True)])["conditions"],
-             "renameOutput": True, "outputKey": "Text"},
+            sw("={{ $json.endung === 'pdf' }}", "PDF"),
+            sw("={{ ['xlsx','xls','ods'].includes($json.endung) }}", "Excel"),
+            sw("={{ $json.endung === 'csv' }}", "CSV"),
+            sw("={{ ['md','txt','html','htm','json'].includes($json.endung) }}", "Text"),
+            sw("={{ $json.azure_aktiv && ['pptx','docx','jpg','jpeg','png','bmp','tif','tiff'].includes($json.endung) }}", "Azure"),
         ]},
-        "options": {"fallbackOutput": "extra", "renameFallbackOutput": "nicht lesbar"}}, [660, 520], "ohne Renderer: nach Dateityp")
+        "options": {"fallbackOutput": "extra", "renameFallbackOutput": "nicht lesbar"}}, [1380, 420], "2 · n8n liest nach Dateityp")
     w.node("Extract from File", "n8n-nodes-base.extractFromFile", 1, {
-        "operation": "pdf", "binaryPropertyName": "datei", "options": {"joinPages": False}}, [900, 380], "PDF je Seite",
+        "operation": "pdf", "binaryPropertyName": "datei", "options": {"joinPages": False}}, [1640, 160], "PDF je Seite",
         onError="continueRegularOutput")
     w.node("Edit Fields3", "n8n-nodes-base.set", 3.4, set_params([
         assign("abschnitte", "={{ (Array.isArray($json.text) ? $json.text : [String($json.text || '')]).map((t, i) => ({ fundstelle: 'Seite ' + (i + 1), text: String(t || '') })) }}", "array"),
+        assign("zeichen", "={{ (Array.isArray($json.text) ? $json.text.join('') : String($json.text || '')).replace(/\\s+/g, '').length }}", "number"),
         assign("hinweis", "={{ $json.error ? ('PDF nicht lesbar: ' + String($json.error.message || $json.error).slice(0, 200)) : '' }}"),
         assign("extraktion", "n8n"),
-    ]), [1120, 380], "Seiten → Abschnitte")
+    ]), [1860, 160], "Seiten → Abschnitte")
+    w.node("If1", "n8n-nodes-base.if", 2.2, filter_params([
+        cond("={{ $json.zeichen >= 100 || !$('Edit Fields').first().json.azure_aktiv }}", "boolean", "true", single=True)]),
+        [2080, 160], "Text gefunden (oder kein Azure)?")
     w.node("Extract from File1", "n8n-nodes-base.extractFromFile", 1, {
-        "operation": "xlsx", "binaryPropertyName": "datei", "options": {}}, [900, 520], "Excel-Zeilen",
+        "operation": "xlsx", "binaryPropertyName": "datei", "options": {}}, [1640, 340], "Excel-Zeilen",
         onError="continueRegularOutput")
     w.node("Extract from File2", "n8n-nodes-base.extractFromFile", 1, {
-        "operation": "csv", "binaryPropertyName": "datei", "options": {}}, [900, 660], "CSV-Zeilen",
+        "operation": "csv", "binaryPropertyName": "datei", "options": {}}, [1640, 500], "CSV-Zeilen",
         onError="continueRegularOutput")
     w.node("Aggregate", "n8n-nodes-base.aggregate", 1, {"aggregate": "aggregateAllItemData",
-                                                        "destinationFieldName": "zeilen", "options": {}}, [1120, 580])
+                                                        "destinationFieldName": "zeilen", "options": {}}, [1860, 420])
     w.node("Edit Fields4", "n8n-nodes-base.set", 3.4, set_params([
         assign("abschnitte", r"""={{ (() => { const z = ($json.zeilen || []).filter(r => r && !r.error); const out = []; for (let i = 0; i < z.length; i += 25) { out.push({ fundstelle: 'Zeilen ' + (i + 2) + '–' + (Math.min(i + 25, z.length) + 1), text: z.slice(i, i + 25).map(r => Object.entries(r).filter(([k, v]) => v !== '' && v != null).map(([k, v]) => k + ': ' + v).join('; ')).join('\n') }); } return out; })() }}""", "array"),
         assign("extraktion", "n8n"),
-    ]), [1340, 580], "Zeilen → Abschnitte")
+    ]), [2080, 420], "Zeilen → Abschnitte")
     w.node("Extract from File3", "n8n-nodes-base.extractFromFile", 1, {
-        "operation": "text", "binaryPropertyName": "datei", "destinationKey": "inhalt", "options": {}}, [900, 800],
+        "operation": "text", "binaryPropertyName": "datei", "destinationKey": "inhalt", "options": {}}, [1640, 660],
         "Text/Markdown", onError="continueRegularOutput")
     w.node("Edit Fields5", "n8n-nodes-base.set", 3.4, set_params([
         assign("abschnitte", r"""={{ (() => { const t = String($json.inhalt || ''); const teile = t.split(/\n(?=#{1,3} )/); const out = []; let n = 0; teile.forEach(p => { for (let i = 0; i < p.length; i += 4000) { n += 1; const kopf = (p.match(/^#{1,3} (.+)/) || [])[1]; out.push({ fundstelle: kopf ? ('Abschnitt ' + n + ': ' + kopf.slice(0, 60)) : ('Abschnitt ' + n), text: p.slice(i, i + 4000) }); } }); return out; })() }}""", "array"),
         assign("extraktion", "n8n"),
-    ]), [1120, 800], "Abschnitte bilden")
+    ]), [1860, 660], "Abschnitte bilden")
     w.node("Edit Fields6", "n8n-nodes-base.set", 3.4, set_params([
         assign("abschnitte", "={{ [] }}", "array"),
-        assign("hinweis", "={{ 'Dateityp .' + $json.endung + ' kann ohne Renderer nicht gelesen werden. Bitte als PDF speichern und erneut hochladen.' }}"),
+        assign("hinweis", "={{ 'Dateityp .' + $json.endung + ' kann ohne Renderer nicht gelesen werden' + ($json.azure_aktiv ? '' : ' (Azure Document Intelligence ist in ECOMEX 0 nicht eingetragen)') + '. Bitte als PDF speichern und erneut hochladen.' }}"),
         assign("extraktion", "n8n"),
-    ]), [900, 960], "nicht lesbar")
-    w.node("Edit Fields7", "n8n-nodes-base.set", 3.4, set_raw(TEXT_ABSCHLUSS), [1580, 300], "einheitliches Ergebnis")
-    w.node("No Operation, do nothing", "n8n-nodes-base.noOp", 1, {}, [1800, 300], "Ergebnis an Aufrufer")
+    ]), [1640, 980], "nicht lesbar")
+    # --- 3 · Azure Document Intelligence (asynchron: Auftrag → warten → Ergebnis)
+    w.node("Merge1", "n8n-nodes-base.merge", 3.2, {"mode": "chooseBranch", "chooseBranchMode": "waitForAll",
+                                                   "output": "specifiedInput", "useDataOfInput": 2},
+           [2340, 820], "3 · an Azure (mit Datei)")
+    http_header(w, "HTTP Request1", "POST",
+                "={{ $json.konfig.azure_di_endpoint + '/documentintelligence/documentModels/prebuilt-layout:analyze?api-version=' + ($json.konfig.azure_di_api_version || '2024-11-30') }}",
+                [2560, 820], "Azure: Analyse beauftragen", "Header Auth: Azure Document Intelligence",
+                headers=[("Content-Type", MIME)], binary_in="datei", full_response=True, timeout=180000,
+                onError="continueErrorOutput", retryOnFail=True, maxTries=2, waitBetweenTries=5000)
+    w.node("Edit Fields8", "n8n-nodes-base.set", 3.4, set_params([
+        assign("operation_url", "={{ String(($json.headers || {})['operation-location'] || ($json.headers || {})['Operation-Location'] || '') }}"),
+    ]), [2780, 760], "Ergebnisadresse")
+    w.node("If4", "n8n-nodes-base.if", 2.2, filter_params([
+        cond("={{ /^https:\\/\\/[^/]+\\.(cognitiveservices\\.azure\\.com|services\\.ai\\.azure\\.com|api\\.cognitive\\.microsoft\\.com)\\//.test($json.operation_url) }}", "boolean", "true", single=True)]),
+        [3000, 760], "Auftrag angenommen?")
+    w.node("Wait", "n8n-nodes-base.wait", 1.1, {"resume": "timeInterval", "amount": 3, "unit": "seconds"}, [3220, 700],
+           "3 Sekunden warten")
+    http_header(w, "HTTP Request2", "GET", "={{ $('Edit Fields8').first().json.operation_url }}", [3440, 700],
+                "Azure: Ergebnis abholen", "Header Auth: Azure Document Intelligence", timeout=120000,
+                onError="continueErrorOutput", retryOnFail=True, maxTries=3, waitBetweenTries=3000)
+    w.node("If2", "n8n-nodes-base.if", 2.2, filter_params([cond("={{ $json.status }}", "string", "equals", "succeeded")]),
+           [3660, 700], "fertig?")
+    w.node("If3", "n8n-nodes-base.if", 2.2, filter_params([
+        cond("={{ ['running','notStarted'].includes($json.status) && $runIndex < 80 }}", "boolean", "true", single=True)]),
+        [3880, 820], "noch in Arbeit? (max. ~4 Min.)")
+    w.node("Edit Fields9", "n8n-nodes-base.set", 3.4, set_raw(AZURE_AUSWERTEN), [3880, 620], "Ergebnis (Azure)")
+    w.node("Edit Fields10", "n8n-nodes-base.set", 3.4, set_raw(AZURE_FEHLER), [4100, 920], "Azure-Fehler")
+    w.node("Edit Fields7", "n8n-nodes-base.set", 3.4, set_raw(TEXT_ABSCHLUSS), [4340, 300], "einheitliches Ergebnis")
+    w.node("No Operation, do nothing", "n8n-nodes-base.noOp", 1, {}, [4560, 300], "Ergebnis an Aufrufer")
+    # Verbindungen
     w.chain(TRIG, "Edit Fields", "If")
     w.link("If", "HTTP Request", 0)
-    w.link("If", "Switch", 1)
+    w.link("If", "Merge", 1, 0)
+    w.link("Edit Fields", "Merge", 0, 1)
     w.link("HTTP Request", "Edit Fields1", 0)
     w.link("HTTP Request", "Edit Fields2", 1)
+    w.link("Edit Fields2", "Merge", 0, 0)
+    w.link("Merge", "Switch")
     w.link("Switch", "Extract from File", 0)
     w.link("Switch", "Extract from File1", 1)
     w.link("Switch", "Extract from File2", 2)
     w.link("Switch", "Extract from File3", 3)
-    w.link("Switch", "Edit Fields6", 4)
+    w.link("Switch", "Merge1", 4, 0)
+    w.link("Switch", "Edit Fields6", 5)
+    w.link("Merge", "Merge1", 0, 1)
     w.link("Extract from File", "Edit Fields3")
+    w.link("Edit Fields3", "If1")
+    w.link("If1", "Edit Fields7", 0)
+    w.link("If1", "Merge1", 1, 0)
     w.link("Extract from File1", "Aggregate")
     w.link("Extract from File2", "Aggregate")
     w.link("Aggregate", "Edit Fields4")
     w.link("Extract from File3", "Edit Fields5")
-    for n in ("Edit Fields1", "Edit Fields2", "Edit Fields3", "Edit Fields4", "Edit Fields5", "Edit Fields6"):
+    w.link("Merge1", "HTTP Request1")
+    w.link("HTTP Request1", "Edit Fields8", 0)
+    w.link("HTTP Request1", "Edit Fields10", 1)
+    w.link("Edit Fields8", "If4")
+    w.link("If4", "Wait", 0)
+    w.link("If4", "Edit Fields10", 1)
+    w.link("Wait", "HTTP Request2")
+    w.link("HTTP Request2", "If2", 0)
+    w.link("HTTP Request2", "Edit Fields10", 1)
+    w.link("If2", "Edit Fields9", 0)
+    w.link("If2", "If3", 1)
+    w.link("If3", "Wait", 0)
+    w.link("If3", "Edit Fields10", 1)
+    for n in ("Edit Fields1", "Edit Fields4", "Edit Fields5", "Edit Fields6", "Edit Fields9", "Edit Fields10"):
         w.link(n, "Edit Fields7")
     w.link("Edit Fields7", "No Operation, do nothing")
+    w.sticky("az", "### 3 · Azure Document Intelligence (optional)\nPowerPoint, Word, Bilder, gescannte PDFs. Auftrag senden → alle 3 s nachfragen (max. ~4 Min.) → Text je Folie/Seite.\nCredential: Header Auth *Azure Document Intelligence* (`Ocp-Apim-Subscription-Key`).",
+             [2320, 560], 1900, 130, 6)
     w.save(OUT / "07_ECOMEX_Text_extrahieren.json")
 
 
@@ -880,6 +995,7 @@ def build_wf8():
                    "={{ $('Edit Fields2').first().json.anthropic_version }}", [2280, 260], "PPTX herunterladen",
                    file_out="pptx", timeout=180000, onError="continueErrorOutput")
     w.node("Edit Fields3", "n8n-nodes-base.set", 3.4, set_params([
+        assign("pptx", "={{ $binary.pptx.id ? Object.assign({}, $binary.pptx, { fileName: $('Edit Fields2').first().json.dateiname + '.pptx', fileExtension: 'pptx', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' }) : 'pptx' }}", "binary"),
         assign("pptx_quelle", "claude"),
         assign("claude_runden", "={{ $('Edit Fields2').first().json.runden }}", "number"),
         assign("master_verwendet", "={{ $('Edit Fields2').first().json.master_verwendet }}", "boolean"),
@@ -1115,3 +1231,120 @@ def build_wf10():
     w.link("Edit Fields6", "Loop Over Items")
     w.link("HTTP Request2", "Edit Fields7")
     w.save(OUT / "10_ECOMEX_Ablage_einlesen.json")
+
+
+# =================================================================================================
+# ECOMEX 11 | Systemcheck – prüft Verknüpfungen, Credentials und Datenbank in einem Lauf
+# =================================================================================================
+KS = "($(\"Call 'ECOMEX 0 | Regelwerk & Katalog laden'\").first().json.konfig || {})"
+
+SYSTEMCHECK_BERICHT = r"""={{ (() => {
+  const C0 = "Call 'ECOMEX 0 | Regelwerk & Katalog laden'";
+  const C7 = "Call 'ECOMEX 7 | Text extrahieren'";
+  const get = n => { try { return $(n).isExecuted ? ($(n).first().json || {}) : null; } catch (e) { return null; } };
+  const fehler = j => { if (!j) return 'nicht ausgeführt'; const e = j.error; if (!e) return ''; return (typeof e === 'string' ? e : ([e.message, e.description].filter(Boolean).join(' – ') || e.code || JSON.stringify(e))).replace(/\s+/g, ' ').slice(0, 220); };
+  const zeilen = [];
+  const add = (bereich, ok, ergebnis, tun) => zeilen.push({ bereich, status: ok === null ? '–' : (ok ? '✔' : '✖'), ergebnis, tun: ok ? '' : tun });
+  const w0 = get(C0) || {};
+  const k = w0.konfig || {};
+  const f0 = fehler(w0);
+  add('ECOMEX 0 verknüpft', !f0 && !!w0.konfig, f0 || 'Konfiguration geladen', 'Im Node „' + C0 + '“ den Workflow ECOMEX 0 auswählen.');
+  if (w0.konfig) {
+    add('GitHub-Regelwerk + Layoutkatalog', !!w0.regelwerk_ok, w0.regelwerk_ok ? (Object.keys(w0.regeln || {}).length + ' Regeldateien, ' + ((w0.katalog || {}).layouts || []).length + ' Layouts (' + k.katalog_quelle + ')') : w0.regelwerk_fehler, 'GitHub-Credential in ECOMEX 0 (List files, Get a file, Get a file1) wählen; Repo/Branch/Ordner in ECOMEX 0 › Edit Fields prüfen.');
+    add('Renderer', k.renderer_aktiv ? true : null, k.renderer_status, '');
+    if (k.katalog_warnung) add('Katalog-Version', false, k.katalog_warnung, 'Renderer neu bauen (docker compose up -d --build).');
+  }
+  const sb = $('HTTP Request').all().map(i => i.json).filter(j => j && j.review_status);
+  const fs = fehler(get('HTTP Request'));
+  add('Supabase (Credential + Datenbank)', !fs, fs || ('Wissensbasis: ' + (sb.length ? sb.map(s => s.review_status + ' ' + s.quellen + ' Quellen/' + s.chunks + ' Abschnitte').join(', ') : 'leer')), /function|could not be found|404|PGRST/i.test(fs) ? 'database/003_content_factory_betrieb.sql im Supabase-SQL-Editor ausführen.' : 'Supabase-Credential (Host + secret/service_role key) in den Supabase-Nodes wählen.');
+  const fa = fehler(get('HTTP Request1'));
+  add('Anthropic Header Auth (PPTX ohne Renderer)', !fa, fa || 'API erreichbar', 'Header-Auth-Credential „Anthropic“ (Name x-api-key) in ECOMEX 8, 9 und hier wählen.');
+  const fz = fehler(get('HTTP Request2'));
+  add('Azure Document Intelligence (optional)', k.azure_aktiv ? !fz : null, k.azure_aktiv ? (fz || 'erreichbar') : 'nicht eingetragen – PowerPoint/Word nur mit Renderer', 'Header-Auth-Credential „Azure Document Intelligence“ (Name Ocp-Apim-Subscription-Key) in ECOMEX 7 und hier wählen; Endpunkt in ECOMEX 0 prüfen.');
+  const fr = fehler(get('HTTP Request3'));
+  add('Renderer-API-Key', k.renderer_aktiv ? !fr : null, k.renderer_aktiv ? (fr || 'Zugriff ok') : 'kein Renderer', 'Header-Auth-Credential „ECOMEX Renderer“ (Name X-API-Key) wählen.');
+  const t7 = get(C7) || {};
+  const f7 = fehler(t7);
+  add('ECOMEX 7 Textextraktion', !f7 && t7.abschnitte_anzahl > 0, f7 || (t7.abschnitte_anzahl + ' Abschnitte per ' + t7.extraktion), 'Im Node „' + C7 + '“ den Workflow ECOMEX 7 auswählen.');
+  const kiFehler = j => fehler(j) || (j && j.pruefung ? 'keine Antwort – Credential fehlt oder ist ungültig (Details im rot markierten Node)' : '');
+  const la = get('Basic LLM Chain') || {};
+  add('Anthropic KI-Credential', !kiFehler(la) && !!la.text, kiFehler(la) || ('Antwort: ' + String(la.text || '').slice(0, 40)), 'Credential vom Typ „Anthropic“ anlegen (API-Key) und in allen Anthropic-Chat-Model-Nodes wählen.');
+  const lo = get('Basic LLM Chain1') || {};
+  add('OpenAI KI-Credential', !kiFehler(lo) && !!lo.text, kiFehler(lo) || ('Antwort: ' + String(lo.text || '').slice(0, 40)), 'Credential vom Typ „OpenAI“ anlegen (API-Key) und in allen OpenAI-Nodes wählen.');
+  const vs = get('Supabase Vector Store') || {};
+  const fv = kiFehler(vs);
+  add('Wissensbasis-Suche (Embeddings + Supabase)', !fv, fv || (vs.document ? 'Treffer: ' + ((vs.document.metadata || {}).title || 'ohne Titel') : 'funktioniert (noch keine Treffer)'), 'OpenAI-Credential in „Embeddings OpenAI“ und Supabase-Credential in „Supabase Vector Store“ wählen.');
+  const offen = zeilen.filter(z => z.status === '✖');
+  const md = ['# ECOMEX Systemcheck · ' + $now.toFormat('dd.MM.yyyy HH:mm'), '', offen.length ? ('**' + offen.length + ' Punkt(e) offen.**') : '**Alles bereit.**', '',
+    '| Prüfung | | Ergebnis | Was tun? |', '|---|---|---|---|'].concat(zeilen.map(z => '| ' + z.bereich + ' | ' + z.status + ' | ' + String(z.ergebnis || '').replace(/\|/g, '/') + ' | ' + z.tun + ' |'));
+  return { alles_bereit: offen.length === 0, offen: offen.length, pruefungen: zeilen, bericht: md.join('\n') };
+})() }}"""
+
+
+def build_wf11():
+    w = WF(WF11)
+    w.sticky("info", "## ECOMEX 11 · Systemcheck\nEinmal nach dem Import und nach jeder Änderung ausführen (*Execute workflow*).\n\n"
+             "Prüft in ~30 Sekunden: Unterworkflows verknüpft, GitHub-Regelwerk, Supabase (Credential + SQL-Funktionen), "
+             "Anthropic- und Azure-Header, Renderer, Textextraktion, KI-Credentials (Anthropic, OpenAI) und die Wissensbasis-Suche.\n\n"
+             "Ergebnis: Tabelle im letzten Node **Edit Fields3** (Feld `bericht`) – mit „Was tun?“ für jeden offenen Punkt.\n"
+             "Kosten: zwei kurze KI-Antworten und eine Embedding-Abfrage (Bruchteile eines Cents).",
+             [-560, -160], 500, 440, 4)
+    w.node("When clicking ‘Execute workflow’", "n8n-nodes-base.manualTrigger", 1, {}, [0, 200])
+    w.node("Edit Fields", "n8n-nodes-base.set", 3.4, set_params([assign("pruefmodus", True, "boolean")]), [220, 200],
+           "Prüfmodus: Fehler melden statt abbrechen")
+    common = {"onError": "continueRegularOutput", "alwaysOutputData": True, "executeOnce": True}
+    call(w, WF0, [440, 200], "Konfiguration, GitHub-Regelwerk, Renderer", **common)
+    http_supabase(w, "HTTP Request", "POST", "/rest/v1/rpc/ecomex_kb_status", [660, 200], "Supabase + SQL-Funktionen",
+                  konfig=KS, json_body="={{ '{}' }}", timeout=30000, **common)
+    http_anthropic(w, "HTTP Request1", "GET", "https://api.anthropic.com/v1/models?limit=1",
+                   "={{ " + KS + ".anthropic_version || '2026-10-21' }}", [880, 200], "Anthropic Header Auth",
+                   timeout=30000, **common)
+    http_header(w, "HTTP Request2", "GET",
+                "={{ " + KS + ".azure_aktiv ? " + KS + ".azure_di_endpoint + '/documentintelligence/documentModels?api-version=' + " + KS + ".azure_di_api_version : 'https://azure-nicht-eingetragen.invalid' }}",
+                [1100, 200], "Azure Document Intelligence (optional)", "Header Auth: Azure Document Intelligence",
+                timeout=30000, **common)
+    http_renderer(w, "HTTP Request3", "/katalog", [1320, 200], "Renderer-API-Key (optional)", method="GET",
+                  base="(" + KS + ".renderer_aktiv ? " + KS + ".renderer_url : 'http://kein-renderer.invalid')", timeout=30000)
+    w.nodes[-1].update(common)
+    w.node("Edit Fields1", "n8n-nodes-base.set", 3.4, set_params([
+        assign("testtext", "# ECOMEX Systemcheck\nDieser kurze Text prüft die Textextraktion.\n\n## Zweiter Abschnitt\nWenn hier zwei Abschnitte erkannt werden, funktioniert ECOMEX 7."),
+    ]), [1540, 200], "Testdatei-Inhalt", executeOnce=True)
+    w.node("Convert to text file", "n8n-nodes-base.convertToFile", 1.1, {
+        "operation": "toText", "sourceProperty": "testtext", "binaryPropertyName": "datei",
+        "options": {"fileName": "systemcheck.md"}}, [1760, 200], "Testdatei erzeugen")
+    w.node("Edit Fields2", "n8n-nodes-base.set", 3.4, set_params([
+        assign("dateiname", "systemcheck.md"),
+        assign("konfig", "={{ " + KS + " }}", "object"),
+    ], include_other=True), [1980, 200], "Kontext (Datei bleibt erhalten)")
+    call(w, WF7, [2200, 200], "Textextraktion testen", **common)
+    # KI-Bausteine reichen bei Fehlern ihre Eingabe weiter → jede Prüfung bekommt ein eigenes, sauberes Item
+    w.node("Edit Fields4", "n8n-nodes-base.set", 3.4, set_params([assign("pruefung", "anthropic")]), [2420, 40],
+           "Prüf-Item Anthropic", executeOnce=True)
+    w.node("Edit Fields5", "n8n-nodes-base.set", 3.4, set_params([assign("pruefung", "openai")]), [2700, 40],
+           "Prüf-Item OpenAI", executeOnce=True)
+    w.node("Edit Fields6", "n8n-nodes-base.set", 3.4, set_params([assign("pruefung", "suche")]), [2980, 40],
+           "Prüf-Item Suche", executeOnce=True)
+    w.node("Basic LLM Chain", "@n8n/n8n-nodes-langchain.chainLlm", 1.9, {
+        "promptType": "define", "text": "Antworte nur mit dem Wort OK."}, [2420, 200], "Anthropic-KI-Credential testen", **common)
+    w.node("Anthropic Chat Model", "@n8n/n8n-nodes-langchain.lmChatAnthropic", 1.6, {
+        "model": SONNET, "options": {"maxTokensToSample": 200}}, [2400, 420])
+    w.ai("Anthropic Chat Model", "Basic LLM Chain", "ai_languageModel")
+    w.node("Basic LLM Chain1", "@n8n/n8n-nodes-langchain.chainLlm", 1.9, {
+        "promptType": "define", "text": "Antworte nur mit dem Wort OK."}, [2700, 200], "OpenAI-KI-Credential testen", **common)
+    openai_model(w, "OpenAI Chat Model", [2680, 420], web=False, effort="low")
+    w.ai("OpenAI Chat Model", "Basic LLM Chain1", "ai_languageModel")
+    w.node("Supabase Vector Store", "@n8n/n8n-nodes-langchain.vectorStoreSupabase", 1.3, {
+        "mode": "load", "tableName": {"__rl": True, "mode": "id", "value": "ecomex_documents"},
+        "prompt": "ECOMEX Systemcheck Wissensbasis", "topK": 1, "includeDocumentMetadata": True,
+        "options": {"queryName": "ecomex_match_documents",
+                    "metadata": {"metadataValues": [{"name": "allow_reference", "value": "true"}]}}},
+        [2980, 200], "Wissensbasis-Suche testen", **common)
+    w.node("Embeddings OpenAI", "@n8n/n8n-nodes-langchain.embeddingsOpenAi", 1.2,
+           {"model": "text-embedding-3-small", "options": {}}, [2960, 420])
+    w.ai("Embeddings OpenAI", "Supabase Vector Store", "ai_embedding")
+    w.node("Edit Fields3", "n8n-nodes-base.set", 3.4, set_raw(SYSTEMCHECK_BERICHT), [3260, 200], "BERICHT", executeOnce=True)
+    w.chain("When clicking ‘Execute workflow’", "Edit Fields", f"Call '{WF0}'", "HTTP Request", "HTTP Request1",
+            "HTTP Request2", "HTTP Request3", "Edit Fields1", "Convert to text file", "Edit Fields2", f"Call '{WF7}'",
+            "Edit Fields4", "Basic LLM Chain", "Edit Fields5", "Basic LLM Chain1", "Edit Fields6", "Supabase Vector Store",
+            "Edit Fields3")
+    w.save(OUT / "11_ECOMEX_Systemcheck.json")

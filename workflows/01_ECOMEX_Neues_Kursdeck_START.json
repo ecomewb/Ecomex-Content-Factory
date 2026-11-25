@@ -502,7 +502,9 @@
       "position": [
         1600,
         680
-      ]
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -678,7 +680,9 @@
       "position": [
         2640,
         880
-      ]
+      ],
+      "notes": "🔑 Anthropic (KI-Credential)",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -1343,7 +1347,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

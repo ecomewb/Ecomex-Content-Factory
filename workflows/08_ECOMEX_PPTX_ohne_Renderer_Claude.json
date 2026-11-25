@@ -51,8 +51,11 @@
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "anthropicApi",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 600000
+        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -61,9 +64,6 @@
               "value": "={{ $json.anthropic_version }}"
             }
           ]
-        },
-        "options": {
-          "timeout": 600000
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -77,7 +77,7 @@
         460,
         200
       ],
-      "notes": "Claude arbeitet (PPTX-Skill)",
+      "notes": "Claude arbeitet (PPTX-Skill)\n🔑 Header Auth: Anthropic",
       "notesInFlow": true,
       "retryOnFail": true,
       "maxTries": 3,
@@ -220,8 +220,11 @@
       "parameters": {
         "method": "GET",
         "url": "={{ 'https://api.anthropic.com/v1/files/' + $json.file_id }}",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "anthropicApi",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -230,9 +233,6 @@
               "value": "={{ $json.anthropic_version }}"
             }
           ]
-        },
-        "options": {
-          "timeout": 60000
         }
       },
       "id": "f3710188-d47f-51e6-872b-58d86404167c",
@@ -243,7 +243,7 @@
         1620,
         260
       ],
-      "notes": "Dateiname prüfen",
+      "notes": "Dateiname prüfen\n🔑 Header Auth: Anthropic",
       "notesInFlow": true,
       "onError": "continueRegularOutput"
     },
@@ -303,17 +303,8 @@
       "parameters": {
         "method": "GET",
         "url": "={{ 'https://api.anthropic.com/v1/files/' + $json.id + '/content' }}",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "anthropicApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "anthropic-version",
-              "value": "={{ $('Edit Fields2').first().json.anthropic_version }}"
-            }
-          ]
-        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "options": {
           "timeout": 180000,
           "response": {
@@ -322,6 +313,15 @@
               "outputPropertyName": "pptx"
             }
           }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "={{ $('Edit Fields2').first().json.anthropic_version }}"
+            }
+          ]
         }
       },
       "id": "4b893a84-b694-5ad4-9295-0735ff548a5d",
@@ -332,7 +332,7 @@
         2280,
         260
       ],
-      "notes": "PPTX herunterladen",
+      "notes": "PPTX herunterladen\n🔑 Header Auth: Anthropic",
       "notesInFlow": true,
       "onError": "continueErrorOutput"
     },
@@ -340,6 +340,12 @@
       "parameters": {
         "assignments": {
           "assignments": [
+            {
+              "id": "f4c8be1d-cdd8-5b52-a02f-a57fc54f57ad",
+              "name": "pptx",
+              "value": "={{ $binary.pptx.id ? Object.assign({}, $binary.pptx, { fileName: $('Edit Fields2').first().json.dateiname + '.pptx', fileExtension: 'pptx', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' }) : 'pptx' }}",
+              "type": "binary"
+            },
             {
               "id": "005e181b-a3f9-5862-bfa7-6b9fdfd537c9",
               "name": "pptx_quelle",
@@ -621,7 +627,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

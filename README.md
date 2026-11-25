@@ -1,4 +1,4 @@
-# ECOMEX Content Factory – 0.2
+# ECOMEX Content Factory – 0.3
 
 **Zweck:** Sichere, nachvollziehbare Einrichtung von Git + Supabase als Basis für n8n-gesteuerte Content- und Designagenten – inklusive der einsatzfähigen n8n-Workflows und des optionalen Folien-Renderers.
 
@@ -16,14 +16,15 @@
 |---|---|
 | `governance/` | Regelwerk (curriculum, didaktik, design, qa_rules, content_workflow) – wird von n8n live geladen |
 | `design/` | Folienmaster 6.2 und Layoutbibliothek |
-| `workflows/` | 11 n8n-Workflows zum Import (ECOMEX 0–10) |
+| `workflows/` | 12 n8n-Workflows zum Import (ECOMEX 0–11, ECOMEX 11 = Systemcheck) |
 | `renderer/` | optionaler Folien-Renderer (Docker); Layoutkatalog der Agenten in `renderer/app/catalog.json` |
 | `database/` | SQL für Supabase |
-| `tools/` | `pruefe_workflows.py` (Prüfer nach Änderungen in n8n), Generator, Ausdrucks-Tests |
+| `tools/` | `pruefe_workflows.py` (Prüfer nach Änderungen in n8n), Generator, Ausdrucks- und Integrationstests |
 | `docs/` | Anleitungen |
 
 **Mit oder ohne Renderer:** ECOMEX 0 prüft bei jedem Lauf, ob der Renderer erreichbar ist. Ohne Renderer
-liest n8n PDF/Excel/Markdown selbst und erzeugt die PowerPoint über den Claude-PPTX-Skill (abschaltbar).
+liest n8n PDF/Excel/Markdown selbst, PPTX/Word/Scans über Azure Document Intelligence, und erzeugt die
+PowerPoint über den Claude-PPTX-Skill (abschaltbar). Nach dem Import zuerst **ECOMEX 11 | Systemcheck** ausführen.
 
 ## Wichtig: Bestehende ECOMEX-Arbeit ist unverändert übernommen
 

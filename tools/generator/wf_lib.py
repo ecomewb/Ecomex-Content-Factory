@@ -10,6 +10,17 @@ def _id(*parts):
     return str(uuid.uuid5(NS, "|".join(str(p) for p in parts)))
 
 
+CRED_AUTO = {
+    "n8n-nodes-base.github": "GitHub",
+    "n8n-nodes-base.supabase": "Supabase",
+    "@n8n/n8n-nodes-langchain.vectorStoreSupabase": "Supabase",
+    "@n8n/n8n-nodes-langchain.lmChatAnthropic": "Anthropic (KI-Credential)",
+    "@n8n/n8n-nodes-langchain.anthropic": "Anthropic (KI-Credential)",
+    "@n8n/n8n-nodes-langchain.lmChatOpenAi": "OpenAI (KI-Credential)",
+    "@n8n/n8n-nodes-langchain.embeddingsOpenAi": "OpenAI (KI-Credential)",
+}
+
+
 class WF:
     def __init__(self, name, tags=None):
         self.name = name
@@ -54,14 +65,32 @@ class WF:
             self.link(a, b)
 
     # ----------------------------------------------------------- Ausgabe
+    def _annotate_credentials(self):
+        """Hängt an jeden Node, der Zugangsdaten braucht, einen sichtbaren Hinweis (🔑 …) an die Notiz."""
+        for n in self.nodes:
+            label = n.pop("_cred", None)
+            p = n.get("parameters", {})
+            if label is None:
+                if n["type"] == "n8n-nodes-base.httpRequest" and p.get("nodeCredentialType") == "supabaseApi":
+                    label = "Supabase"
+                else:
+                    label = CRED_AUTO.get(n["type"])
+            if not label or n.get("disabled"):
+                continue
+            hinweis = "🔑 " + label
+            if hinweis not in n.get("notes", ""):
+                n["notes"] = (n.get("notes", "") + "\n" + hinweis).strip()
+                n["notesInFlow"] = True
+
     def to_json(self, settings=None):
+        self._annotate_credentials()
         s = {"executionOrder": "v1", "binaryMode": "separate", "saveManualExecutions": True,
              "saveDataErrorExecution": "all", "saveDataSuccessExecution": "all", "callerPolicy": "workflowsFromSameOwner"}
         if settings:
             s.update(settings)
         return {"name": self.name, "nodes": self.nodes, "connections": self.connections, "pinData": {},
                 "settings": s, "active": False, "meta": {"templateCredsSetupCompleted": False,
-                                                          "ecomex_content_factory": "5.0"},
+                                                          "ecomex_content_factory": "0.3"},
                 "tags": []}
 
     def save(self, path, settings=None):

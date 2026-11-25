@@ -115,9 +115,9 @@
         "assignments": {
           "assignments": [
             {
-              "id": "996f16b8-0aef-5ff7-a75a-46414c126f6b",
+              "id": "2238c019-86d4-5c70-8c56-c61f1694e5b6",
               "name": "deck",
-              "value": "={{ $json.daten.deck || $json.daten }}",
+              "value": "={{ (d => d.deck || d)(Array.isArray($json.daten) ? ($json.daten[0] || {}) : ($json.daten || {})) }}",
               "type": "object"
             },
             {
@@ -416,7 +416,7 @@
         2220,
         20
       ],
-      "notes": "PPTX neu rendern",
+      "notes": "PPTX neu rendern\n🔑 Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)",
       "notesInFlow": true,
       "onError": "continueErrorOutput"
     },
@@ -547,7 +547,7 @@
     {
       "parameters": {
         "operation": "toJson",
-        "mode": "once",
+        "mode": "each",
         "binaryPropertyName": "deck",
         "options": {
           "fileName": "={{ ($json.deck.meta.dateiname || 'ECOMEX_Deck') + '_Deckdaten.json' }}"
@@ -895,7 +895,7 @@
   "active": false,
   "meta": {
     "templateCredsSetupCompleted": false,
-    "ecomex_content_factory": "5.0"
+    "ecomex_content_factory": "0.3"
   },
   "tags": []
 }

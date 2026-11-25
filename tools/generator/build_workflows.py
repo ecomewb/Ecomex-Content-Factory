@@ -22,6 +22,7 @@ WF7 = "ECOMEX 7 | Text extrahieren"
 WF8 = "ECOMEX 8 | PPTX ohne Renderer (Claude)"
 WF9 = "ECOMEX 9 | Master an Claude übergeben"
 WF10 = "ECOMEX 10 | Ablage einlesen (Supabase)"
+WF11 = "ECOMEX 11 | Systemcheck"
 
 OPUS = rl_list("claude-opus-5-5", "Claude Opus 5.5")
 SONNET = rl_list("claude-sonnet-5-5", "Claude Sonnet 5.5")
@@ -68,7 +69,9 @@ def http_renderer(wf, name, path_expr, pos, note, method="POST", body_expr=None,
                                                      "inputDataFieldName": multipart}]}})
     if file_out:
         p["options"]["response"] = {"response": {"responseFormat": "file", "outputPropertyName": file_out}}
-    return wf.node(name, "n8n-nodes-base.httpRequest", 4.2, p, pos, note)
+    wf.node(name, "n8n-nodes-base.httpRequest", 4.2, p, pos, note)
+    wf.nodes[-1]["_cred"] = "Header Auth: ECOMEX Renderer (nur nötig, wenn der Renderer läuft)"
+    return name
 
 
 def call(w, wf_name, pos, note, mode="once", wait=True, **extra):
@@ -96,19 +99,34 @@ def http_supabase(w, name, method, path_expr, pos, note, konfig="$json.konfig", 
 
 def http_anthropic(w, name, method, url_expr, version_expr, pos, note, json_body=None, file_out=None, multipart=None,
                    timeout=600000, **extra):
-    """HTTP Request mit dem vorhandenen Anthropic-Credential (x-api-key) + anthropic-version."""
-    p = {"method": method, "url": url_expr, "authentication": "predefinedCredentialType", "nodeCredentialType": "anthropicApi",
-         "sendHeaders": True, "headerParameters": {"parameters": [{"name": "anthropic-version", "value": version_expr}]},
+    """HTTP Request an die Anthropic-API mit dem Header-Auth-Credential (x-api-key) + anthropic-version."""
+    return http_header(w, name, method, url_expr, pos, note, "Header Auth: Anthropic",
+                       headers=[("anthropic-version", version_expr)], json_body=json_body, file_out=file_out,
+                       multipart=multipart, timeout=timeout, **extra)
+
+
+def http_header(w, name, method, url_expr, pos, note, cred, headers=None, json_body=None, file_out=None, multipart=None,
+                binary_in=None, full_response=False, timeout=300000, **extra):
+    """HTTP Request mit einem Header-Auth-Credential (Anthropic, Azure Document Intelligence, Renderer)."""
+    p = {"method": method, "url": url_expr, "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
          "options": {"timeout": timeout}}
+    if headers:
+        p.update({"sendHeaders": True, "headerParameters": {"parameters": [{"name": k, "value": v} for k, v in headers]}})
     if json_body:
         p.update({"sendBody": True, "specifyBody": "json", "jsonBody": json_body})
     if multipart:
         p.update({"sendBody": True, "contentType": "multipart-form-data",
                   "bodyParameters": {"parameters": [{"parameterType": "formBinaryData", "name": "file",
                                                      "inputDataFieldName": multipart}]}})
+    if binary_in:
+        p.update({"sendBody": True, "contentType": "binaryData", "inputDataFieldName": binary_in})
     if file_out:
         p["options"]["response"] = {"response": {"responseFormat": "file", "outputPropertyName": file_out}}
-    return w.node(name, "n8n-nodes-base.httpRequest", 4.2, p, pos, note, **extra)
+    if full_response:
+        p["options"]["response"] = {"response": {"fullResponse": True}}
+    w.node(name, "n8n-nodes-base.httpRequest", 4.2, p, pos, note, **extra)
+    w.nodes[-1]["_cred"] = cred
+    return name
 
 
 # =================================================================================================
@@ -446,6 +464,6 @@ exec(compile((Path(__file__).parent / "wf_new.py").read_text(encoding="utf-8"), 
 
 if __name__ == "__main__":
     for f in (build_wf0, build_wf1, build_wf2, build_wf3, build_wf4, build_wf5, build_wf6, build_wf7, build_wf8,
-              build_wf9, build_wf10):
+              build_wf9, build_wf10, build_wf11):
         f()
     print("Workflows geschrieben nach", OUT)
