@@ -1,0 +1,22 @@
+# Beispiel: Renderer neben n8n betreiben (gleiches Docker-Netz wie n8n).
+# n8n erreicht den Dienst dann unter http://ecomex-renderer:8080
+services:
+  ecomex-renderer:
+    build: .
+    container_name: ecomex-renderer
+    restart: unless-stopped
+    environment:
+      RENDERER_API_KEY: "${RENDERER_API_KEY}"   # langes Zufallspasswort, identisch im n8n-Credential
+      EXTRACT_MAX_MB: "${EXTRACT_MAX_MB:-150}"  # größere Dateien bitte als PDF exportieren
+    volumes:
+      - ../design/ECOMEX_Masterlayout_6.2.pptx:/srv/masters/ecomex_master.pptx:ro   # Originalmaster aus dem Repo (bei neuem Master Pfad anpassen)
+      - ./config:/srv/config:ro
+    # Nicht öffentlich freigeben – nur intern für n8n:
+    expose:
+      - "8080"
+    networks:
+      - n8n_default
+
+networks:
+  n8n_default:
+    external: true   # Namen des bestehenden n8n-Netzes eintragen (docker network ls)

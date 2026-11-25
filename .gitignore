@@ -12,3 +12,8 @@ Thumbs.db
 node_modules/
 __pycache__/
 jobs/*/render/
+
+# Renderer-Testausgaben und Werkzeuge
+renderer/tests/out/
+tools/tests/node_modules/
+tools/tests/package-lock.json

@@ -1,17 +1,17 @@
 {
-  "version": "0.1.2",
+  "version": "0.2.0",
   "files": {
     ".env.example": {
       "sha256": "890c7d9bf07ae9de9084dd863516d81bc447a790f7543120c7f257b97742a4d9",
       "bytes": 223
     },
     ".gitignore": {
-      "sha256": "b7d4a7885c24693b533f938338b84471beb0ffd685c6720b7ae21651bb226395",
-      "bytes": 187
+      "sha256": "81bdb12963a5b5e355a86728f46c0773a79a10f681ad9b49b0b9b670a33f34ec",
+      "bytes": 302
     },
     "README.md": {
-      "sha256": "8d9291dea10c04dced2a623e6a04ab892d0363bc48f2230b789d38cdd5ffcc40",
-      "bytes": 1883
+      "sha256": "26f34c74ea8c72c87419de5c64640cd86357fd604cd8caa611580a30f332fb02",
+      "bytes": 3082
     },
     "database/001_create_kb.sql": {
       "sha256": "51a79c3981ae03330a7cb01edb4ea39e24397f347388156e3b8605d30c689ce4",
@@ -20,6 +20,10 @@
     "database/002_pruefen_ohne_schreiben.sql": {
       "sha256": "69abe0d3099329c6927d4787cb9c7dab9d8036f2407553e79e603d8a0ce7e77c",
       "bytes": 860
+    },
+    "database/003_content_factory_betrieb.sql": {
+      "sha256": "8e48a8dbbd2bf6f49a942424d02db9ea23a70d9bc4d83796f0e183c28e10d8dd",
+      "bytes": 6076
     },
     "design/ECOMEX_Masterlayout_6.2.pptx": {
       "sha256": "bc7a2eaf1a0528fd0d2a45efcdcd6e32d7a82df14381a9f75fc043062bbff906",
@@ -46,8 +50,12 @@
       "bytes": 2971
     },
     "docs/03_Agenten_und_n8n.md": {
-      "sha256": "c098eee54429d843e6db8defe2b85378f60936a2837f733f049fc0e1e36c1e38",
-      "bytes": 3368
+      "sha256": "111e63267f2713a5bd48b864e26b3f4a3ba369f8d29ab79be58c8f1bc6100532",
+      "bytes": 3476
+    },
+    "docs/04_Betrieb_mit_und_ohne_Renderer.md": {
+      "sha256": "007e6217acfb5099d9c8dc280f7287955523af214f7a9d94f0c897287e39e942",
+      "bytes": 10626
     },
     "governance/content_workflow.md": {
       "sha256": "386d67c5cac3c7a629d9d18e81bc7d90b1dbd5d6ac1a3e80003341192c703a17",
@@ -73,6 +81,86 @@
       "sha256": "c804255d0b54d09edc557507be06efc6f465ff02f6d8099c7924690b998f00b1",
       "bytes": 19022
     },
+    "renderer/.dockerignore": {
+      "sha256": "a9aade8e5a646658ace9fbeee8f350a4b94a54b6a1533586f3505640bd5c374b",
+      "bytes": 16
+    },
+    "renderer/Dockerfile": {
+      "sha256": "d0d227789963705f3d59f9d0656bfecbd9027709bf27e478c023fdd06d2180e4",
+      "bytes": 1014
+    },
+    "renderer/README.md": {
+      "sha256": "1696948eca223f0f9cf81c79f6de9c2c1ca86dfdb4ec616438a55b422df1d968",
+      "bytes": 4892
+    },
+    "renderer/app/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "renderer/app/catalog.json": {
+      "sha256": "9d1cf861c5ee01e5bbd7f392693aa62e3b1a894769159f4113d6699e8111a635",
+      "bytes": 10776
+    },
+    "renderer/app/extract.py": {
+      "sha256": "db208ee93769a1e7c9460d8f50fe5b7645ec0dae5ff7b69e9ab4af9a03826370",
+      "bytes": 5968
+    },
+    "renderer/app/layouts.py": {
+      "sha256": "fbc798671002f05b1b57983b13cc6857ce781648f5d690a04b9f3ff6dd8f2c52",
+      "bytes": 26015
+    },
+    "renderer/app/main.py": {
+      "sha256": "e819f7490434b517ed0a2f68e9784323714e64ad2497d4e3788d148ecbc5ab9b",
+      "bytes": 5810
+    },
+    "renderer/app/pptxkit.py": {
+      "sha256": "51bace9862c0a605c87bdae52beab0e7284d662ac0e9430dd888cffc161344a2",
+      "bytes": 16109
+    },
+    "renderer/app/render.py": {
+      "sha256": "51b00ef8f50d476a8ced58db929a31a31f0d78be379127a933d7dcfb6ef0ad19",
+      "bytes": 14841
+    },
+    "renderer/app/textfit.py": {
+      "sha256": "56c8ddc9133d08b9e2ef3931455855bdb0e376a10ccbac36d61edd5c4d6e8a46",
+      "bytes": 5095
+    },
+    "renderer/config/brand.json": {
+      "sha256": "8a94fa46efe9c09e8159adb6921e6fbb37d8091a475885887cbce6c2aae03444",
+      "bytes": 157
+    },
+    "renderer/config/master_map.json": {
+      "sha256": "f791e389e24609eb0731e4e57c595654fcad246af7e5cd1b6f81e5a6c13a105e",
+      "bytes": 182
+    },
+    "renderer/docker-compose.yml": {
+      "sha256": "35e6a70ef73d713497523ef56484b6306b47cae9cd267e9253c93e2cbbb3e3f9",
+      "bytes": 881
+    },
+    "renderer/fonts/LIESMICH.txt": {
+      "sha256": "0a3ec5ac5b673bf8374430096bf08dbe16d7c7ce5324360a63933e2e7925502d",
+      "bytes": 81
+    },
+    "renderer/masters/demo_master.pptx": {
+      "sha256": "4c7db506979922b1813b4f93edd2d3b3d0f0e6a4da8531412b707cd14dcfba4b",
+      "bytes": 27950
+    },
+    "renderer/requirements.txt": {
+      "sha256": "b664a39bced1af2052bfa8232ff42a0970c06141eb622facd0c9927524fd6791",
+      "bytes": 163
+    },
+    "renderer/tests/render_sample.py": {
+      "sha256": "f6eae9bb6fc1d3f522ebd5df7d32e30d7d0acbf2f164fb547af6f3e3e974cd8b",
+      "bytes": 568
+    },
+    "renderer/tests/sample_deck.json": {
+      "sha256": "35e2af683abc604a4b1e37a2796c9f5f4487fc196e6af2a08c420b6cfed58201",
+      "bytes": 12771
+    },
+    "renderer/tools/make_demo_master.py": {
+      "sha256": "544475874e1ca385bfafcde6b301e3fdce177947f5e5fb1be91c61acaf32d471",
+      "bytes": 6967
+    },
     "samples/ECOMEX_slide_specs_examples_v3.json": {
       "sha256": "48f0132b1f27839fcf657f2621b7aede40c5c4ff2737dd723e17b92f83a63370",
       "bytes": 1580
@@ -80,6 +168,82 @@
     "samples/source_registry_example.csv": {
       "sha256": "0d95d1035255ca4a90e674ee981f2c6291fbfa5853a0b42cd7fb5a4c677782b8",
       "bytes": 261
+    },
+    "tools/generator/build_workflows.py": {
+      "sha256": "d60c60799ef7b8a2ad112608b7510f23e80b92ec1ba78ac126653145f8d1bbe8",
+      "bytes": 33065
+    },
+    "tools/generator/prompts.py": {
+      "sha256": "b281198378c7688636234ea48a332dcdcd63083f00cf7c7ed8fce451bd9c99a7",
+      "bytes": 26549
+    },
+    "tools/generator/wf_lib.py": {
+      "sha256": "f42c0eccfbbaddf5ecd77005abc4de8fbfd9f92d194cb6eab1ac58c1a3c9fe6e",
+      "bytes": 4710
+    },
+    "tools/generator/wf_new.py": {
+      "sha256": "7ff9df0b63f6a4135b87255c53a5769972bd046c95fa32266428af8f60b8c100",
+      "bytes": 85020
+    },
+    "tools/pruefe_workflows.py": {
+      "sha256": "2339faac0698129ec61af7e1737d34fda1c391a49dbf8d8ab6ed7488f54475c9",
+      "bytes": 6140
+    },
+    "tools/tests/package.json": {
+      "sha256": "d8a19c1ce1e27c53abee9b10276c92d370be47efd6f5aa397089a4e225bd57d7",
+      "bytes": 342
+    },
+    "tools/tests/stub.js": {
+      "sha256": "e45217f89b9a7f23c8de0e5caefc460e69af8b9a25a1c80d35abd975d6238f9c",
+      "bytes": 316
+    },
+    "tools/tests/test_workflows.js": {
+      "sha256": "c08064829e85e9c5ec4f765316337c1f68ca2d1f57bb85255b968c68649b4efc",
+      "bytes": 19344
+    },
+    "workflows/00_ECOMEX_Regelwerk_und_Katalog_laden.json": {
+      "sha256": "44f0d65281a68392b9cf9a58befca4cc4389f5b467199378c02e6cada0622c2c",
+      "bytes": 22808
+    },
+    "workflows/01_ECOMEX_Neues_Kursdeck_START.json": {
+      "sha256": "9116df1316f0d8749ea3de2dce095cea3256160d287f62d0ff43fcd51cf888f5",
+      "bytes": 48389
+    },
+    "workflows/02_ECOMEX_Tag_produzieren.json": {
+      "sha256": "f12c22882eb8111f9c6877066cf0316adaec92199e9c6fb5371cd0ce14f585fc",
+      "bytes": 34375
+    },
+    "workflows/03_ECOMEX_Block_produzieren_AGENTEN.json": {
+      "sha256": "fd9285795245526de3b4de7a983758960693d9b8bf5b13c6e35cffa700f30068",
+      "bytes": 43578
+    },
+    "workflows/04_ECOMEX_Deck_ueberarbeiten.json": {
+      "sha256": "d0626bf24cfeef7416ec1e7b5b9968bd2cedd473f73079c90c403efe32811a23",
+      "bytes": 24632
+    },
+    "workflows/05_ECOMEX_Wissensbasis_befuellen.json": {
+      "sha256": "ce3d56cf370b00646e7dde0d6e55d66f7ccc5a1b8bc45d9967f84c6609966753",
+      "bytes": 28224
+    },
+    "workflows/06_ECOMEX_Freigabe_und_Ablage.json": {
+      "sha256": "d1388fe63995cfb07cf9e4b2e5adc356a1d8b8b0a01fa5bea368410a7e680334",
+      "bytes": 14210
+    },
+    "workflows/07_ECOMEX_Text_extrahieren.json": {
+      "sha256": "647605707de9adc501717313dcd1e34b40b34a37a1f1128ea9f782485af5bcb2",
+      "bytes": 23303
+    },
+    "workflows/08_ECOMEX_PPTX_ohne_Renderer_Claude.json": {
+      "sha256": "36879cb7c91f26fae666aaaad7444c4662d9091aa072e251aefdc58e9054af65",
+      "bytes": 20704
+    },
+    "workflows/09_ECOMEX_Master_an_Claude.json": {
+      "sha256": "bc12c3e3f0f80b7b4a30799812a8a6ff1a1ee06be9e7af1bb4f3daa8cf70dcb3",
+      "bytes": 7068
+    },
+    "workflows/10_ECOMEX_Ablage_einlesen.json": {
+      "sha256": "a838456423e53a9ed17a4c0693341cbfd5a2a89e4f48115e3e90022360e25c40",
+      "bytes": 32497
     }
   }
 }

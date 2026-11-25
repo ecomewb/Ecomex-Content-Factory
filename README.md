@@ -1,13 +1,29 @@
-# ECOMEX Content Factory – Starterpaket 0.1
+# ECOMEX Content Factory – 0.2
 
-**Zweck:** Sichere, nachvollziehbare Einrichtung von Git + Supabase als Basis für n8n-gesteuerte Content- und Designagenten.
+**Zweck:** Sichere, nachvollziehbare Einrichtung von Git + Supabase als Basis für n8n-gesteuerte Content- und Designagenten – inklusive der einsatzfähigen n8n-Workflows und des optionalen Folien-Renderers.
 
 ## Zuerst lesen
 
 1. `docs/01_Einrichtung_fuer_Einsteiger.md` – Schritt für Schritt ohne Terminal
 2. `docs/02_Datenpflege_und_Qualitaet.md` – Pflege, Berechtigungen, Freigaben
 3. `docs/03_Agenten_und_n8n.md` – Rollen und Datenflüsse
-4. `database/001_create_kb.sql` – vorgeschlagene Pilotdatenbank, vor Ausführung prüfen
+4. `docs/04_Betrieb_mit_und_ohne_Renderer.md` – n8n-Workflows einrichten, betreiben und später sicher ändern
+5. `database/001_create_kb.sql` + `003_content_factory_betrieb.sql` – Wissensbasis und Ablage-Import
+
+## Ordner
+
+| Ordner | Inhalt |
+|---|---|
+| `governance/` | Regelwerk (curriculum, didaktik, design, qa_rules, content_workflow) – wird von n8n live geladen |
+| `design/` | Folienmaster 6.2 und Layoutbibliothek |
+| `workflows/` | 11 n8n-Workflows zum Import (ECOMEX 0–10) |
+| `renderer/` | optionaler Folien-Renderer (Docker); Layoutkatalog der Agenten in `renderer/app/catalog.json` |
+| `database/` | SQL für Supabase |
+| `tools/` | `pruefe_workflows.py` (Prüfer nach Änderungen in n8n), Generator, Ausdrucks-Tests |
+| `docs/` | Anleitungen |
+
+**Mit oder ohne Renderer:** ECOMEX 0 prüft bei jedem Lauf, ob der Renderer erreichbar ist. Ohne Renderer
+liest n8n PDF/Excel/Markdown selbst und erzeugt die PowerPoint über den Claude-PPTX-Skill (abschaltbar).
 
 ## Wichtig: Bestehende ECOMEX-Arbeit ist unverändert übernommen
 
@@ -19,10 +35,10 @@ Der aktuelle Folienmaster `design/ECOMEX_Masterlayout_6.2.pptx` und die technisc
 
 ## Nicht enthalten
 
-- Keine aktiven API-Verbindungen oder Credentials.
-- Keine vollständige n8n-Agentenautomation.
-- Keine bereinigten, indexierten Fachquellen aus Bestandspräsentationen.
-- Keine offiziell geprüfte Datenschutz-/Rechtefreigabe.
+- Keine Credentials oder Schlüssel (werden in n8n bzw. `.env` gesetzt, nie im Repo).
+- Fachquellen werden erst durch ECOMEX 10 (Ablage) bzw. ECOMEX 5 (Einzeldatei) indexiert; ein Import ist keine fachliche Freigabe.
+- Keine offiziell geprüfte Datenschutz-/Rechtefreigabe (Formulare fragen die Freigabe für externe KI-Dienste ab).
+- Layoutkatalog noch auf Basis der Renderer-Layouts; Angleichung an alle Master-6.2-Layouts und automatische Bildbeschaffung folgen.
 
 ## Ergebnis von Schritt 1
 

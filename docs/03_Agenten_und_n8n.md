@@ -37,13 +37,17 @@
 
 `governance/optional_methods/ki_kuratierte_projektreise_repoabgleich_v0.2.md` nur bei explizitem, dokumentiertem Freigabeflag laden. Nicht zum Standard für alle Module machen. Eigenständige Entscheidungen, alternativer Lösungsweg und Transfer ohne Wizard müssen sichtbar bleiben.
 
-## Konkrete Reihenfolge der n8n-Workflows
+## Konkrete n8n-Workflows
 
-1. `KB-01_source_register`: kontrollierter Quellenimport und Datenklassifizierung (noch kein KI-Agent).
-2. `KB-02_search_test`: Fragen/Embeddings → Quellen, Fundstellen und Status zurückgeben, keine Schreibrechte.
-3. `CP-01_storyboard`: zielgerichtete MDs + RAG → Entwurf → menschliche Freigabe.
-4. `CP-02_content`: Content und Quellenbelege → strukturierte SlideSpecs.
-5. `CP-03_design`: Layout-IDs/Mapping → Renderer oder bestehender geeigneter Connector.
-6. `CP-04_qa_release`: Prüfläufe → Human Gate → SharePoint-Publikation.
+Umgesetzt in `workflows/` (ECOMEX 0–10); Einrichtung, Betrieb mit/ohne Renderer und Regeln für spätere Änderungen: `docs/04_Betrieb_mit_und_ohne_Renderer.md`.
+
+| Ursprünglicher Plan | Umsetzung |
+|---|---|
+| `KB-01_source_register` | ECOMEX 5 (Einzeldatei) und ECOMEX 10 (Supabase-Ablage) |
+| `KB-02_search_test` | Suche als fester Schritt in ECOMEX 3 (`ecomex_match_documents`) |
+| `CP-01_storyboard` | ECOMEX 1 mit menschlicher Freigabe |
+| `CP-02_content` | ECOMEX 3 (Recherche, Didaktik, Layout, QA, Revision) |
+| `CP-03_design` | ECOMEX 2/4 → Renderer oder ECOMEX 8 (Claude-PPTX-Skill) |
+| `CP-04_qa_release` | QA-Bericht in ECOMEX 2, Freigabe in ECOMEX 6 |
 
 **API-Rechte:** n8n-Agent-Tools nicht direkt mit dem breit berechtigten Supabase-Secret Key verbinden. Nur den Retrieval-Teil des Workflows mit den benötigten Suchfunktionen koppeln; Admin-Credential bleibt außerhalb der Agenten-Tool-Auswahl. Langfristig eigener Read-only-Endpoint.

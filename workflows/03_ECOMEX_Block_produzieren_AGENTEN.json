@@ -1,0 +1,932 @@
+{
+  "name": "ECOMEX 3 | Block produzieren",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ECOMEX 3 · Block produzieren (Agenten-Team)\nEine Lerneinheit = ein Lauf. Aufgerufen von ECOMEX 2 und ECOMEX 4.\n\n**Recherche** (GPT + Websuche, interne Fundstellen aus Supabase – Status *approved*, und *reference*, solange in ECOMEX 0 erlaubt)\n→ **Fachdidaktik** (Claude Opus: Inhalt, Übungen, Sprechertext)\n→ **Layout** (Claude Sonnet: Katalog-Layouts, Zeichenlimits)\n→ **QA** (GPT + Websuche, unabhängig)\n→ bei Mängeln **Revision** (Claude Opus), max. 1 Runde.\n\nPausen werden ohne KI gesetzt.\nRegeln aus GitHub stehen in jedem System-Prompt (Prompt-Caching aktiv).",
+        "height": 460,
+        "width": 500,
+        "color": 4
+      },
+      "id": "dd80acab-bfaf-59fa-be24-b0305bbc58f1",
+      "name": "Sticky Note info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "4e7d8601-bd61-5e9e-9ad5-c998b4e3e1a9",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fb772597-b264-51b7-950d-974229876dcd",
+              "leftValue": "={{ String($json.zeile.Art || '').toLowerCase().trim() }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "pause"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a7ae4cf2-e425-517c-a9f7-821d2add9469",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "Pause?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const z = $json.zeile;\n  const min = s => { const p = String(s || '').split(':').map(Number); return (p[0] || 0) * 60 + (p[1] || 0); };\n  const d = min(z.Bis) - min(z.Von);\n  return { block: z.Block, titel: z.Titel, quellen: [], qa: { status: 'OHNE_KI', befunde: [] },\n    folien: [{ layout: 'pause', block: 'Block ' + z.Block, felder: { titel: z.Titel || 'Pause', dauer: d > 0 ? d + ' Min.' : '', text: z.Bis ? 'Weiter geht es um ' + z.Bis + ' Uhr.' : '' },\n      notizen: 'Pause.' }] };\n})() }}",
+        "options": {}
+      },
+      "id": "01638986-65c9-5f58-94d2-2ac96acca48e",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        100
+      ],
+      "notes": "Pausenfolie ohne KI",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "mode": "id",
+          "value": "ecomex_documents"
+        },
+        "prompt": "={{ [$json.thema, $json.zeile.Titel, $json.zeile.Inhalte, $json.zeile.Lernziele].filter(Boolean).join(' · ') }}",
+        "topK": 8,
+        "includeDocumentMetadata": true,
+        "options": {
+          "queryName": "ecomex_match_documents",
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "allow_reference",
+                "value": "={{ String(!$json.konfig || $json.konfig.wissensbasis_referenzen !== false) }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "fed1a2ea-1494-55cf-bfd3-dd075acd0450",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        460,
+        440
+      ],
+      "notes": "interne Fundstellen (RAG)",
+      "notesInFlow": true,
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "3345ff52-78c5-5037-ada0-8170e8c298b9",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "treffer",
+        "options": {}
+      },
+      "id": "81550357-39f2-5bf0-8022-9b2759b46b73",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        700,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "38698ef7-7be6-5389-b64e-dad097d8feb6",
+              "name": "fundstellen_text",
+              "value": "={{ (($json.treffer || []).filter(t => t.document && t.document.pageContent).map((t, i) => '[' + (i + 1) + '] ' + ((t.document.metadata || {}).title || 'ohne Titel') + ' · ' + ((t.document.metadata || {}).locator || '') + ' · ' + ((t.document.metadata || {}).source_uri || '') + ' · Relevanz ' + (t.score ? Number(t.score).toFixed(2) : '?') + '\\n' + String(t.document.pageContent).slice(0, 2500)).join('\\n\\n')) || 'Keine internen Fundstellen (Wissensbasis leer oder nicht verbunden).' }}",
+              "type": "string"
+            },
+            {
+              "id": "9edef4d2-8210-5215-a67b-99ddbc550e17",
+              "name": "anzahl_fundstellen",
+              "value": "={{ ($json.treffer || []).filter(t => t.document).length }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eca35c2f-6b1d-5226-9caf-f3c2b5eedb12",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        920,
+        440
+      ],
+      "notes": "Fundstellen aufbereiten",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=LERNEINHEIT\nModul {{ $('When Executed by Another Workflow').first().json.modul }} · {{ $('When Executed by Another Workflow').first().json.tag }} · Kursthema: {{ $('When Executed by Another Workflow').first().json.thema }}\n{{ JSON.stringify($('When Executed by Another Workflow').first().json.zeile, null, 1) }}\n\nINTERNE FUNDSTELLEN\n{{ $json.fundstellen_text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "=Du bist die Fachrecherche der ECOMEX Content-Redaktion. Du lieferst belastbares, aktuelles Fachwissen für GENAU EINE Lerneinheit eines KI-Weiterbildungskurses. Heute ist {{ $now.setLocale('de').toFormat('d. MMMM yyyy') }}.\n\nVORGEHEN\n1. Werte zuerst die INTERNEN FUNDSTELLEN (bisheriges ECOMEX-Kursmaterial) aus. Übernimm, was fachlich trägt – mit Fundstelle. Markiere Veraltetes.\n2. Recherchiere dann im Web: Herstellerdokumentation, Gesetzestexte und Behörden (EU AI Act, DSGVO, BSI, Datenschutzbehörden), seriöse Forschung, etablierte Fachmedien. KI-Werkzeuge ändern sich schnell: prüfe Funktionsumfang, Namen und Preise auf aktuellen Stand.\n3. Trenne Aussage, Beleg, Datum und Sicherheit. Keine erfundenen URLs, Studien, Zahlen oder Menüpfade. Was du nicht belegen kannst, gehört in \"unsicherheiten\".\n4. Liefere didaktisch verwertbares Material: Praxisbeispiele aus typischen Berufsfeldern der Teilnehmenden (Büro/Verwaltung, Vertrieb, Marketing, Personal, Projektarbeit), typische Fehlvorstellungen und Gegenpositionen.\n5. Bleib im Rahmen der Lerneinheit – keine Themen anderer Blöcke.\nAntworte auf Deutsch.\n\nKURSRAHMEN (curriculum.md, Auszug)\n{{ String(($('When Executed by Another Workflow').first().json.regeln || {})['curriculum.md'] || '(Regeldatei curriculum.md nicht gefunden)').slice(0, 20000) }}"
+            }
+          ]
+        }
+      },
+      "id": "3a97e7e0-d759-59db-b363-ae45915452b7",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1160,
+        440
+      ],
+      "notes": "1 · Recherche-Agent (GPT + Websuche)",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5.5",
+          "cachedResultName": "gpt-5.5"
+        },
+        "responsesApiEnabled": true,
+        "options": {
+          "reasoningEffort": "medium",
+          "timeout": 600000,
+          "maxRetries": 2
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "high"
+          }
+        }
+      },
+      "id": "99230565-038c-595a-931e-ce5edb4f8f5a",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1100,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"kernaussagen\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"aussage\": {\n      \"type\": \"string\"\n     },\n     \"beleg\": {\n      \"type\": \"string\",\n      \"description\": \"Titel der Quelle\"\n     },\n     \"url\": {\n      \"type\": \"string\"\n     },\n     \"datum\": {\n      \"type\": \"string\"\n     },\n     \"interne_fundstelle\": {\n      \"type\": \"string\"\n     },\n     \"sicherheit\": {\n      \"type\": \"string\",\n      \"description\": \"hoch | mittel | niedrig\"\n     }\n    },\n    \"required\": [\n     \"aussage\"\n    ]\n   }\n  },\n  \"werkzeug_stand\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"werkzeug\": {\n      \"type\": \"string\"\n     },\n     \"funktion\": {\n      \"type\": \"string\"\n     },\n     \"stand\": {\n      \"type\": \"string\"\n     },\n     \"url\": {\n      \"type\": \"string\"\n     }\n    },\n    \"required\": [\n     \"werkzeug\",\n     \"funktion\"\n    ]\n   }\n  },\n  \"praxisbeispiele\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"fehlvorstellungen\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"unsicherheiten\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"quellen\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"titel\": {\n      \"type\": \"string\"\n     },\n     \"url\": {\n      \"type\": \"string\"\n     },\n     \"datum\": {\n      \"type\": \"string\"\n     },\n     \"art\": {\n      \"type\": \"string\",\n      \"description\": \"intern | primaer | forschung | fachmedien | sonstiges\"\n     }\n    },\n    \"required\": [\n     \"titel\"\n    ]\n   }\n  }\n },\n \"required\": [\n  \"kernaussagen\",\n  \"quellen\"\n ]\n}"
+      },
+      "id": "779d1b9f-5a00-5050-9947-2f7d91bda09d",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1260,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=AUFTRAG\nModul: {{ $('When Executed by Another Workflow').first().json.modul }} | {{ $('When Executed by Another Workflow').first().json.tag }} | Kursthema: {{ $('When Executed by Another Workflow').first().json.thema }}\nZielgruppe: {{ $('When Executed by Another Workflow').first().json.zielgruppe }}\n\nTAGESÜBERSICHT (nur zur Abgrenzung – bearbeite ausschließlich DEINEN Block)\n{{ $('When Executed by Another Workflow').first().json.tagesuebersicht }}\n\nDEIN BLOCK (Storyboard-Zeile, verbindlich)\n{{ JSON.stringify($('When Executed by Another Workflow').first().json.zeile, null, 1) }}\nZiel-Folienzahl: {{ $('When Executed by Another Workflow').first().json.zeile.Folien || 6 }}\n\nRECHERCHE (mit Belegen)\n{{ JSON.stringify($('Basic LLM Chain').first().json.output) }}\n\nINTERNE FUNDSTELLEN (ECOMEX-Material)\n{{ $('Edit Fields1').first().json.fundstellen_text }}\n{{ $('When Executed by Another Workflow').first().json.revision ? '\\n\\nÜBERARBEITUNGSAUFTRAG DER REDAKTION (hat Vorrang vor allem außer dem Storyboard)\\n' + $('When Executed by Another Workflow').first().json.revision.hinweise + '\\n\\nBISHERIGE FOLIEN DIESES BLOCKS\\n' + JSON.stringify($('When Executed by Another Workflow').first().json.revision.bisherige_folien).slice(0, 40000) : '' }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "=Du bist Senior-Fachredakteur:in und Erwachsenendidaktiker:in der ECOMEX Business Academy. Du schreibst den Inhalt GENAU EINER Lerneinheit als Folienentwurf: fachlich präzise, didaktisch durchdacht, berufspraktisch, sofort unterrichtbar – auch von Dozierenden, die das Thema nicht selbst entwickelt haben.\n\nVERBINDLICH\n1. Die Storyboard-Zeile ist der Auftrag: Titel, Lernziele, Inhalte, Methode und Zeit genau umsetzen. Inhalte, die laut Tagesübersicht in andere Blöcke gehören, NICHT vorwegnehmen.\n2. Ziel-Folienzahl einhalten (±1). Fachliche Tiefe statt Folienfülle.\n3. Dramaturgie Input-Block: Einstieg über eine berufliche Situation oder Frage → Erarbeitung in kleinen, logisch aufeinander aufbauenden Schritten → konkretes Praxisbeispiel → Sicherung (Merksatz/Zusammenfassung). Aktivierung mindestens alle 15–20 Minuten (Frage, Murmelphase, Mini-Aufgabe).\n4. Dramaturgie Übungs-Block: Arbeitsauftrag (nummerierte Schritte, Dauer, Sozialform, konkretes Ergebnis, Basis- UND Vertiefungspfad) → vollständiges fiktives Ausgangsmaterial (echte Daten, keine Platzhalter wie \"[Text einfügen]\") → nachvollziehbare Musterlösung → kurze Auswertungsfrage. Übungen funktionieren ohne Setup-Hürden mit Werkzeugen, die die Teilnehmenden haben.\n5. Fakten nur aus RECHERCHE oder INTERNEN FUNDSTELLEN; zu jeder belegten Aussage die Quelle in \"quellen\" (Titel + URL bzw. interne Fundstelle). Unbelegtes als Annahme kennzeichnen (\"annahmen\"). Werkzeug-Klickpfade nur, wenn belegt – sonst allgemein beschreiben.\n6. \"notizen\" ist das Herzstück für Dozierende: Was sage ich? Welche Frage stelle ich? Welche Antworten sind zu erwarten? Worauf achte ich bei Einsteiger:innen bzw. Erfahrenen? Wie lange dauert es? 80–200 Wörter pro Folie.\n7. Folientext knapp – Kernaussagen statt Fließtext. Details, Hintergründe und Beispiele gehören in die Notizen.\n8. Sprache: klares Deutsch, Sie-Form, aktiv, konkret; keine Buzzwords, kein Management-Sprech, keine Superlative; gendergerecht (Doppelpunkt oder neutral).\n9. \"visualisierung\": beschreibe, welche Darstellungsform die Aussage am besten trägt (z. B. Prozess in 4 Schritten, Vergleich zweier Spalten, 3 Karten, Kennzahl, Tabelle, Prompt-Beispiel).\n\nECOMEX-REGELWERK (aktuell aus GitHub geladen – hat Vorrang)\n### didaktik.md\n{{ String(($('When Executed by Another Workflow').first().json.regeln || {})['didaktik.md'] || '(Regeldatei didaktik.md nicht gefunden)').slice(0, 60000) }}\n### curriculum.md\n{{ String(($('When Executed by Another Workflow').first().json.regeln || {})['curriculum.md'] || '(Regeldatei curriculum.md nicht gefunden)').slice(0, 40000) }}\n### content_workflow.md\n{{ String(($('When Executed by Another Workflow').first().json.regeln || {})['content_workflow.md'] || '(Regeldatei content_workflow.md nicht gefunden)').slice(0, 30000) }}"
+            }
+          ]
+        }
+      },
+      "id": "4513c32c-9b9a-58d4-8d3b-ef04e950d007",
+      "name": "Basic LLM Chain1",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1500,
+        440
+      ],
+      "notes": "2 · Fachdidaktik-Agent (Claude Opus)",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-opus-5-5",
+          "cachedResultName": "Claude Opus 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 48000,
+          "thinkingMode": "adaptive",
+          "effort": "high",
+          "streaming": true,
+          "promptCaching": "1h"
+        }
+      },
+      "id": "0883788e-022d-55fa-8409-437c73c1f1c6",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        1440,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"folien\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"nr\": {\n      \"type\": \"integer\"\n     },\n     \"funktion\": {\n      \"type\": \"string\",\n      \"description\": \"einstieg | erklaerung | vergleich | prozess | beispiel | definition | fakten | demo | anleitung | uebung | material | loesung | reflexion | zusammenfassung\"\n     },\n     \"titel\": {\n      \"type\": \"string\"\n     },\n     \"kernaussage\": {\n      \"type\": \"string\"\n     },\n     \"inhalt\": {\n      \"type\": \"array\",\n      \"items\": {\n       \"type\": \"string\"\n      }\n     },\n     \"visualisierung\": {\n      \"type\": \"string\"\n     },\n     \"notizen\": {\n      \"type\": \"string\",\n      \"description\": \"Sprechertext für Dozierende, 80–200 Wörter\"\n     },\n     \"dauer_min\": {\n      \"type\": \"number\"\n     },\n     \"quellen\": {\n      \"type\": \"array\",\n      \"items\": {\n       \"type\": \"string\"\n      }\n     },\n     \"annahmen\": {\n      \"type\": \"array\",\n      \"items\": {\n       \"type\": \"string\"\n      }\n     }\n    },\n    \"required\": [\n     \"nr\",\n     \"funktion\",\n     \"titel\",\n     \"inhalt\",\n     \"notizen\"\n    ]\n   }\n  },\n  \"offene_punkte\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  }\n },\n \"required\": [\n  \"folien\"\n ]\n}"
+      },
+      "id": "a7685e9d-8a18-5a2d-8750-8a542050e0c0",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1600,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=BLOCK {{ $('When Executed by Another Workflow').first().json.zeile.Block }}: {{ $('When Executed by Another Workflow').first().json.zeile.Titel }} ({{ $('When Executed by Another Workflow').first().json.zeile.Von }}–{{ $('When Executed by Another Workflow').first().json.zeile.Bis }}, Art: {{ $('When Executed by Another Workflow').first().json.zeile.Art }})\nZiel-Folienzahl: {{ $('When Executed by Another Workflow').first().json.zeile.Folien || 6 }}\n\nINHALTSENTWURF\n{{ JSON.stringify($('Basic LLM Chain1').first().json.output) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "=Du bist Informationsdesigner:in für ECOMEX-Kursfolien. Du setzt einen fertigen Inhaltsentwurf in Folien aus dem ECOMEX-Layoutkatalog um. Ein Renderer baut daraus automatisch eine editierbare PowerPoint im Original-Master.\n\nREGELN\n1. Inhalt NICHT verändern: keine neuen Fakten, keine Umdeutung, keine weggelassenen Aussagen. Erlaubt: kürzen, verdichten, für Lesbarkeit umformulieren, auf Felder verteilen. Was nicht auf die Folie passt, wandert vollständig in \"notizen\".\n2. Wähle pro Folie das Layout, das die AUSSAGE am besten zeigt: Abfolge → prozess; Gegenüberstellung → zwei_spalten; 2–4 gleichrangige Begriffe → karten; Kennzahl mit Quelle → zahl_fakt; mehrere Kriterien → tabelle; Begriff → zitat_definition; Fall → praxisbeispiel; Prompt/Eingabe → prompt_demo; Klickpfad → tool_anleitung; zentrale Botschaft → kernaussage; Einstiegsfrage → leitfrage. \"stichpunkte\" nur, wenn nichts anderes passt.\n3. Leitidee: wie ein hochwertiger Katalog – abwechslungsreich, ruhig, großzügig. Nie mehr als 2 gleiche Layouts hintereinander (Ausnahme material/loesung). Maximal eine \"bild_text\"-Folie pro Block und nur mit klarer Bildidee.\n4. Erste Folie jedes Input-, Übungs- oder Reflexionsblocks ist \"kapitel\" (nummer = Blocknummer zweistellig, dauer = Blockdauer, leitfrage = die Leitfrage des Blocks). Diese Kapitelfolie zählt zur Folienzahl.\n5. Übung = \"uebung\" + \"material\" (wenn Ausgangsdaten nötig; lange Materialien auf max. 2 Folien verteilen) + \"loesung\".\n6. Zeichenlimits und max. Einträge des Katalogs STRIKT einhalten – lieber deutlich kürzer. Überschriften kurz und konkret (keine Sätze mit mehr als 9 Wörtern). In Listen ist \"Begriff: Erklärung\" erwünscht (Begriff wird fett).\n7. \"titel\" steht immer in \"felder\". \"notizen\" übernimmt den Sprechertext vollständig (nicht kürzen) plus ausgelagerte Details. \"quellen\" unverändert übernehmen.\n8. \"review_hinweise\": alles, was ein Mensch prüfen oder ergänzen muss (Screenshot, Bild, unsichere Aussage, Annahme).\n\nDESIGNREGELN (design.md, aktuell aus GitHub)\n{{ String(($('When Executed by Another Workflow').first().json.regeln || {})['design.md'] || '(Regeldatei design.md nicht gefunden)').slice(0, 30000) }}\n\nLAYOUTKATALOG (einzige erlaubte Layouts und Felder)\n{{ JSON.stringify($('When Executed by Another Workflow').first().json.katalog.layouts) }}\nKatalogregeln: {{ JSON.stringify($('When Executed by Another Workflow').first().json.katalog.regeln_fuer_agenten) }}"
+            }
+          ]
+        }
+      },
+      "id": "2f45d66e-eaa8-5f3c-b702-445893d5b37b",
+      "name": "Basic LLM Chain2",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1840,
+        440
+      ],
+      "notes": "3 · Layout-Agent (Claude Sonnet)",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5",
+          "cachedResultName": "Claude Sonnet 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 32000,
+          "thinkingMode": "adaptive",
+          "effort": "medium",
+          "streaming": true,
+          "promptCaching": "1h"
+        }
+      },
+      "id": "2d013598-5739-57f2-86e4-c19dd0076d05",
+      "name": "Anthropic Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        1780,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"folien\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"layout\": {\n      \"type\": \"string\",\n      \"description\": \"id aus dem Layoutkatalog\"\n     },\n     \"felder\": {\n      \"type\": \"object\",\n      \"description\": \"Felder laut Layoutkatalog, immer inkl. 'titel'\"\n     },\n     \"notizen\": {\n      \"type\": \"string\"\n     },\n     \"quellen\": {\n      \"type\": \"array\",\n      \"items\": {\n       \"type\": \"string\"\n      }\n     },\n     \"review_hinweise\": {\n      \"type\": \"array\",\n      \"items\": {\n       \"type\": \"string\"\n      }\n     },\n     \"dauer_min\": {\n      \"type\": \"number\"\n     }\n    },\n    \"required\": [\n     \"layout\",\n     \"felder\",\n     \"notizen\"\n    ]\n   }\n  },\n  \"nicht_behoben\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   },\n   \"description\": \"nur bei Revision: Befunde, die nicht gelöst werden konnten (mit Grund)\"\n  }\n },\n \"required\": [\n  \"folien\"\n ]\n}"
+      },
+      "id": "873d5a63-03cf-559b-9ff8-857d13a8777c",
+      "name": "Structured Output Parser2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1940,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=STORYBOARD-ZEILE\n{{ JSON.stringify($('When Executed by Another Workflow').first().json.zeile, null, 1) }}\n\nRECHERCHE DER REDAKTION\n{{ JSON.stringify($('Basic LLM Chain').first().json.output) }}\n\nFOLIENENTWURF (Layout-Fassung)\n{{ JSON.stringify($('Basic LLM Chain2').first().json.output) }}\n\nOFFENE PUNKTE DER AUTORIN\n{{ JSON.stringify($('Basic LLM Chain1').first().json.output.offene_punkte || []) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "=Du bist die unabhängige Qualitätssicherung der ECOMEX-Redaktion – nicht die Autorin. Prüfe den Folienentwurf EINER Lerneinheit kritisch, konkret und fair. Nutze die Websuche, um zweifelhafte oder zeitkritische Aussagen (Werkzeugfunktionen, Preise, Recht, Zahlen) zu verifizieren.\n\nPRÜFE\n1. Fachlich: Stimmen Aussagen, Zahlen, Werkzeugfunktionen, Rechtslage? Ist der Stand aktuell? Gibt es unbelegte Behauptungen?\n2. Storyboard-Treue: Sind Lernziele, Inhalte, Methode und Zeit der Zeile umgesetzt? Wurde etwas Fremdes ergänzt oder etwas weggelassen?\n3. Didaktik: roter Faden, Progression, Aktivierung, Praxisbezug, Transfer; Einsteiger:innen werden nicht abgehängt, Erfahrene nicht gelangweilt.\n4. Übungen: Auftrag, Dauer, Sozialform, konkretes Ergebnis, Basis- und Vertiefungspfad, vollständiges Material ohne Platzhalter, nachvollziehbare Musterlösung.\n5. Folien: passendes Layout, Zeichenlimits des Katalogs, keine Textwüsten, keine Wiederholungen, Sprechernotizen ausreichend.\n6. Sprache: verständlich, korrekt, Sie-Form, gendergerecht, keine Buzzwords.\n\nBEWERTUNG\n- schwere \"blocker\": falsch, rechtlich riskant oder Übung nicht durchführbar; \"major\": deutliche Lücke/Unschärfe; \"minor\": Feinschliff.\n- status \"UEBERARBEITEN\", sobald mindestens ein blocker oder major vorliegt, sonst \"OK\".\n- Jeder Befund nennt die Folie (Nummer ab 1 innerhalb dieses Blocks), den konkreten Mangel und eine konkrete Korrektur (Formulierung, Quelle, Ergänzung).\n- Die visuelle Prüfung erfolgt später am gerenderten Deck – bewerte hier keine Optik.\n\nQA-REGELN (qa_rules.md, aktuell aus GitHub)\n{{ String(($('When Executed by Another Workflow').first().json.regeln || {})['qa_rules.md'] || '(Regeldatei qa_rules.md nicht gefunden)').slice(0, 40000) }}\n### didaktik.md (Auszug)\n{{ String(($('When Executed by Another Workflow').first().json.regeln || {})['didaktik.md'] || '(Regeldatei didaktik.md nicht gefunden)').slice(0, 20000) }}"
+            }
+          ]
+        }
+      },
+      "id": "c059c67b-de05-55da-907c-91399e30e5a1",
+      "name": "Basic LLM Chain3",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2180,
+        440
+      ],
+      "notes": "4 · QA-Agent (GPT + Websuche, unabhängig)",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5.5",
+          "cachedResultName": "gpt-5.5"
+        },
+        "responsesApiEnabled": true,
+        "options": {
+          "reasoningEffort": "high",
+          "timeout": 600000,
+          "maxRetries": 2
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "high"
+          }
+        }
+      },
+      "id": "94b1d726-f03c-54fa-9786-691a92149d61",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2120,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"status\": {\n   \"type\": \"string\",\n   \"enum\": [\n    \"OK\",\n    \"UEBERARBEITEN\"\n   ]\n  },\n  \"befunde\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"folie\": {\n      \"type\": \"integer\"\n     },\n     \"schwere\": {\n      \"type\": \"string\",\n      \"description\": \"blocker | major | minor\"\n     },\n     \"kategorie\": {\n      \"type\": \"string\",\n      \"description\": \"fachlich | aktualitaet | storyboard | didaktik | uebung | layout | sprache | quelle\"\n     },\n     \"befund\": {\n      \"type\": \"string\"\n     },\n     \"korrektur\": {\n      \"type\": \"string\"\n     }\n    },\n    \"required\": [\n     \"folie\",\n     \"schwere\",\n     \"befund\",\n     \"korrektur\"\n    ]\n   }\n  },\n  \"staerken\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   }\n  },\n  \"offene_punkte\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   },\n   \"description\": \"Punkte, die ein Mensch entscheiden muss\"\n  }\n },\n \"required\": [\n  \"status\",\n  \"befunde\"\n ]\n}"
+      },
+      "id": "f02b3239-0fe7-57cc-8af3-a08d7ddddf12",
+      "name": "Structured Output Parser3",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2280,
+        680
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7c66ebe4-7b98-5335-af3e-1f41b17c10cb",
+              "leftValue": "={{ $json.output.status }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "UEBERARBEITEN"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "97e9337a-d798-51a0-b8ce-9149e07d902c",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2420,
+        440
+      ],
+      "notes": "Mängel gefunden?",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=QA-BEFUNDE\n{{ JSON.stringify($('Basic LLM Chain3').first().json.output) }}\n\nRECHERCHE (Belege)\n{{ JSON.stringify($('Basic LLM Chain').first().json.output) }}\n\nFOLIENENTWURF (zu korrigieren)\n{{ JSON.stringify($('Basic LLM Chain2').first().json.output) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "SystemMessagePromptTemplate",
+              "message": "=Du bist die Revisionsredaktion der ECOMEX Content-Redaktion. Du korrigierst einen Folienentwurf ausschließlich anhand der QA-Befunde.\n\nREGELN\n1. \"blocker\" und \"major\" zwingend beheben, \"minor\", wenn es ohne Nebenwirkung geht.\n2. Alles, was nicht bemängelt wurde, bleibt wortgleich (Layout, Felder, Notizen, Quellen, Reihenfolge).\n3. Keine neuen unbelegten Fakten: Was nicht belegbar ist, entfernen oder als Annahme kennzeichnen und in review_hinweise aufnehmen.\n4. Gleiches Format und gleiche Katalogregeln wie die Layout-Fassung (Layouts, Felder, Zeichenlimits).\n5. Liste in \"nicht_behoben\" jeden Befund, den du nicht lösen konntest – mit Grund.\n\nLAYOUTKATALOG\n{{ JSON.stringify($('When Executed by Another Workflow').first().json.katalog.layouts) }}"
+            }
+          ]
+        }
+      },
+      "id": "dd312d59-0928-5220-b355-e66fcdf16007",
+      "name": "Basic LLM Chain4",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2660,
+        300
+      ],
+      "notes": "5 · Revisions-Agent (Claude Opus)",
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-opus-5-5",
+          "cachedResultName": "Claude Opus 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 32000,
+          "thinkingMode": "adaptive",
+          "effort": "medium",
+          "streaming": true,
+          "promptCaching": "1h"
+        }
+      },
+      "id": "68d21add-e10e-5ec6-8fb0-b5378e59444f",
+      "name": "Anthropic Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        2600,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n \"type\": \"object\",\n \"properties\": {\n  \"folien\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n     \"layout\": {\n      \"type\": \"string\",\n      \"description\": \"id aus dem Layoutkatalog\"\n     },\n     \"felder\": {\n      \"type\": \"object\",\n      \"description\": \"Felder laut Layoutkatalog, immer inkl. 'titel'\"\n     },\n     \"notizen\": {\n      \"type\": \"string\"\n     },\n     \"quellen\": {\n      \"type\": \"array\",\n      \"items\": {\n       \"type\": \"string\"\n      }\n     },\n     \"review_hinweise\": {\n      \"type\": \"array\",\n      \"items\": {\n       \"type\": \"string\"\n      }\n     },\n     \"dauer_min\": {\n      \"type\": \"number\"\n     }\n    },\n    \"required\": [\n     \"layout\",\n     \"felder\",\n     \"notizen\"\n    ]\n   }\n  },\n  \"nicht_behoben\": {\n   \"type\": \"array\",\n   \"items\": {\n    \"type\": \"string\"\n   },\n   \"description\": \"nur bei Revision: Befunde, die nicht gelöst werden konnten (mit Grund)\"\n  }\n },\n \"required\": [\n  \"folien\"\n ]\n}"
+      },
+      "id": "e1304871-f2b8-52a2-b8ca-6accd9a8b572",
+      "name": "Structured Output Parser4",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2760,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ (() => {\n  const job = $('When Executed by Another Workflow').first().json;\n  const z = job.zeile;\n  const rev = $('Basic LLM Chain4').isExecuted;\n  const design = rev ? $('Basic LLM Chain4').first().json.output : $('Basic LLM Chain2').first().json.output;\n  const qa = $('Basic LLM Chain3').first().json.output;\n  const rech = $('Basic LLM Chain').first().json.output;\n  const label = 'Block ' + z.Block;\n  return {\n    block: z.Block, titel: z.Titel, von: z.Von, bis: z.Bis,\n    folien: (design.folien || []).map(f => ({ ...f, block: label })),\n    qa: { status: rev ? 'UEBERARBEITET' : qa.status, befunde: qa.befunde || [], nicht_behoben: rev ? (design.nicht_behoben || []) : [],\n          offene_punkte: [...($('Basic LLM Chain1').first().json.output.offene_punkte || []), ...(qa.offene_punkte || [])] },\n    quellen: rech.quellen || [],\n    interne_fundstellen: $('Edit Fields1').first().json.anzahl_fundstellen\n  };\n})() }}",
+        "options": {}
+      },
+      "id": "4c2b12ae-ff76-5deb-af9e-61ad0d42ae06",
+      "name": "Edit Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2900,
+        440
+      ],
+      "notes": "Blockergebnis",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "**1 · Recherche** – GPT-5.5 mit Websuche (OpenAI-Credential). Wertet interne Fundstellen und aktuelle Primärquellen aus; Aussagen mit Beleg, Datum, Sicherheit.",
+        "height": 190,
+        "width": 310,
+        "color": 7
+      },
+      "id": "87c3cce2-5644-5e39-beb4-79a54d8d1654",
+      "name": "Sticky Note a1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**2 · Fachdidaktik** – Claude Opus 5.5 (Anthropic-Credential). Inhalt, Übungen mit Material + Musterlösung, Sprechertext – nach didaktik.md.",
+        "height": 190,
+        "width": 310,
+        "color": 7
+      },
+      "id": "818f6f4c-8d00-5e7a-952e-0b47b3f51008",
+      "name": "Sticky Note a2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**3 · Layout** – Claude Sonnet 5.5. Wählt Layouts aus dem Katalog, hält Zeichenlimits ein, verändert keine Inhalte.",
+        "height": 190,
+        "width": 310,
+        "color": 7
+      },
+      "id": "6da143e0-4c1a-5e8d-ba71-833346a58edb",
+      "name": "Sticky Note a3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1740,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**4 · QA** – GPT-5.5 + Websuche, bewusst anderer Anbieter als die Autorin. Prüft gegen qa_rules.md; blocker/major → Revision.",
+        "height": 190,
+        "width": 310,
+        "color": 7
+      },
+      "id": "108ec848-0551-5120-aa8a-4e7e4f8c40ba",
+      "name": "Sticky Note a4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "content": "**5 · Revision** – Claude Opus 5.5, max. 1 Runde. Was nicht lösbar ist, bleibt im QA-Bericht sichtbar.",
+        "height": 170,
+        "width": 330,
+        "color": 7
+      },
+      "id": "6cb86e87-63ed-5b78-9505-5f1f7d39c10a",
+      "name": "Sticky Note a5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        -140
+      ]
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain2": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain3": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain4",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "ecomex_content_factory": "5.0"
+  },
+  "tags": []
+}

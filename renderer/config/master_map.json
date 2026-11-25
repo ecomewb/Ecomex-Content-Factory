@@ -1,0 +1,6 @@
+{
+  "_hinweis": "Optional. Katalog-Layout -> Name des Master-Layouts. Leer lassen = automatische Zuordnung (siehe POST /inspect).",
+  "default": "",
+  "titel": "",
+  "kapitel": ""
+}

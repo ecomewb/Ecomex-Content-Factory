@@ -1,0 +1,259 @@
+{
+  "version": "4.0",
+  "beschreibung": "ECOMEX-Layoutkatalog. Einzige Quelle für Agenten (Auswahl) und Renderer (Darstellung). Jede Folie = genau ein Layout. Zeichenlimits sind Obergrenzen inkl. Leerzeichen; lieber kürzer.",
+  "regeln_fuer_agenten": [
+    "Nur layout-IDs aus diesem Katalog verwenden.",
+    "Zeichenlimits strikt einhalten: kürzen und verdichten, nicht abschneiden. Lange Erklärungen gehören in 'notizen' (Sprechertext).",
+    "Nicht mehr als 2 Folien desselben Layouts direkt hintereinander (Ausnahme: material/loesung-Paare).",
+    "Visuelle Abwechslung wie in einem Katalog: Aussagen, Schaubilder, Vergleiche, Übungen und Reflexion mischen.",
+    "Jede Übung besteht aus 'uebung' + passendem 'material' (falls Eingabedaten nötig) + 'loesung'.",
+    "Keine Fakten erfinden. Unbelegtes als Annahme kennzeichnen und in 'quellen' leer lassen."
+  ],
+  "layouts": [
+    {
+      "id": "titel",
+      "name": "Tagestitel",
+      "einsatz": "Erste Folie eines Tages. Wird automatisch aus dem Storyboard erzeugt.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "untertitel": {"typ": "text", "max": 110},
+        "meta": {"typ": "text", "max": 80, "hinweis": "z. B. 'Modul 2 · Tag 12 · KI-Manager'"}
+      }
+    },
+    {
+      "id": "tagesablauf",
+      "name": "Tagesablauf / Zeitplan",
+      "einsatz": "Zeitstruktur des Tages (09:00–15:00 bzw. Fr 09:00–13:00). Wird automatisch aus dem Storyboard erzeugt.",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "eintraege": {"typ": "objektliste", "max_eintraege": 10, "felder": {"zeit": {"max": 13}, "titel": {"max": 60}, "art": {"max": 12, "werte": ["input", "uebung", "pause", "reflexion", "sonstiges"]}}}
+      }
+    },
+    {
+      "id": "lernziele",
+      "name": "Lernziele",
+      "einsatz": "Am Tages- oder Blockbeginn. Handlungsorientiert formulieren (Die Teilnehmenden können …).",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "ziele": {"typ": "liste", "max_eintraege": 5, "max": 120, "pflicht": true}
+      }
+    },
+    {
+      "id": "kapitel",
+      "name": "Kapitel- / Blockstart",
+      "einsatz": "Beginn einer Lerneinheit. Strukturiert den Tag sichtbar.",
+      "felder": {
+        "nummer": {"typ": "text", "max": 3, "hinweis": "z. B. '02'"},
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "leitfrage": {"typ": "text", "max": 120},
+        "dauer": {"typ": "text", "max": 20, "hinweis": "z. B. '60 Min.'"}
+      }
+    },
+    {
+      "id": "leitfrage",
+      "name": "Leitfrage / Einstieg",
+      "einsatz": "Problemorientierter Einstieg, Aktivierung, Hypothese. Eine große Frage.",
+      "felder": {
+        "titel": {"typ": "text", "max": 50, "pflicht": true},
+        "frage": {"typ": "text", "max": 140, "pflicht": true},
+        "kontext": {"typ": "text", "max": 200}
+      }
+    },
+    {
+      "id": "kernaussage",
+      "name": "Kernaussage",
+      "einsatz": "Eine zentrale Botschaft, die hängen bleiben soll. Sparsam einsetzen.",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "aussage": {"typ": "text", "max": 140, "pflicht": true},
+        "erlaeuterung": {"typ": "text", "max": 240}
+      }
+    },
+    {
+      "id": "stichpunkte",
+      "name": "Stichpunkte",
+      "einsatz": "Klassische Aufzählung. Nur, wenn kein Schaubild besser passt.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "punkte": {"typ": "liste", "max_eintraege": 6, "max": 120, "pflicht": true},
+        "fazit": {"typ": "text", "max": 120}
+      }
+    },
+    {
+      "id": "zwei_spalten",
+      "name": "Vergleich zwei Spalten",
+      "einsatz": "Gegenüberstellung: vorher/nachher, Mensch/KI, Pro/Contra, Option A/B.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "links": {"typ": "objekt", "felder": {"ueberschrift": {"max": 40}, "punkte": {"typ": "liste", "max_eintraege": 5, "max": 90}}, "pflicht": true},
+        "rechts": {"typ": "objekt", "felder": {"ueberschrift": {"max": 40}, "punkte": {"typ": "liste", "max_eintraege": 5, "max": 90}}, "pflicht": true},
+        "fazit": {"typ": "text", "max": 120}
+      }
+    },
+    {
+      "id": "karten",
+      "name": "Karten (2–4 Konzepte)",
+      "einsatz": "Gleichrangige Begriffe, Bausteine, Typen, Rollen.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "karten": {"typ": "objektliste", "max_eintraege": 4, "min_eintraege": 2, "felder": {"ueberschrift": {"max": 32}, "text": {"max": 160}}, "pflicht": true}
+      }
+    },
+    {
+      "id": "prozess",
+      "name": "Prozess / Ablauf (3–6 Schritte)",
+      "einsatz": "Abfolgen, Workflows, Vorgehensmodelle.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "schritte": {"typ": "objektliste", "max_eintraege": 6, "min_eintraege": 3, "felder": {"titel": {"max": 26}, "text": {"max": 110}}, "pflicht": true}
+      }
+    },
+    {
+      "id": "tabelle",
+      "name": "Tabelle",
+      "einsatz": "Strukturierte Vergleiche mit mehreren Kriterien. Max. 5 Spalten x 6 Zeilen.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "kopf": {"typ": "liste", "max_eintraege": 5, "max": 28, "pflicht": true},
+        "zeilen": {"typ": "tabelle", "max_eintraege": 6, "max": 70, "pflicht": true},
+        "hinweis": {"typ": "text", "max": 140}
+      }
+    },
+    {
+      "id": "zitat_definition",
+      "name": "Zitat / Definition",
+      "einsatz": "Begriffsdefinition oder belegtes Zitat mit Quelle.",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "text": {"typ": "text", "max": 260, "pflicht": true},
+        "quelle": {"typ": "text", "max": 120}
+      }
+    },
+    {
+      "id": "zahl_fakt",
+      "name": "Zahlen & Fakten (1–3)",
+      "einsatz": "Belegte Kennzahlen. Nur mit Quelle!",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "fakten": {"typ": "objektliste", "max_eintraege": 3, "felder": {"wert": {"max": 10}, "label": {"max": 90}, "quelle": {"max": 80}}, "pflicht": true}
+      }
+    },
+    {
+      "id": "praxisbeispiel",
+      "name": "Praxisbeispiel / Fall",
+      "einsatz": "Berufspraktischer Fall: Ausgangslage → Vorgehen → Ergebnis.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "situation": {"typ": "text", "max": 220, "pflicht": true},
+        "vorgehen": {"typ": "text", "max": 220, "pflicht": true},
+        "ergebnis": {"typ": "text", "max": 220, "pflicht": true}
+      }
+    },
+    {
+      "id": "prompt_demo",
+      "name": "Prompt / Werkzeug-Demo",
+      "einsatz": "Konkreter Prompt oder Eingabe in ein KI-Werkzeug mit Einordnung.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "werkzeug": {"typ": "text", "max": 30},
+        "prompt": {"typ": "text", "max": 650, "pflicht": true},
+        "erklaerung": {"typ": "liste", "max_eintraege": 4, "max": 110}
+      }
+    },
+    {
+      "id": "tool_anleitung",
+      "name": "Werkzeug-Anleitung",
+      "einsatz": "Klickpfad / Einrichtung in einem Werkzeug. Screenshot wird manuell ergänzt.",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "werkzeug": {"typ": "text", "max": 30},
+        "schritte": {"typ": "liste", "max_eintraege": 6, "max": 110, "pflicht": true},
+        "screenshot_hinweis": {"typ": "text", "max": 140}
+      }
+    },
+    {
+      "id": "bild_text",
+      "name": "Bild + Text",
+      "einsatz": "Visuelle Auflockerung mit Bildidee (Platzhalter, Bild wird manuell eingesetzt).",
+      "felder": {
+        "titel": {"typ": "text", "max": 70, "pflicht": true},
+        "bildidee": {"typ": "text", "max": 160, "pflicht": true},
+        "punkte": {"typ": "liste", "max_eintraege": 4, "max": 110}
+      }
+    },
+    {
+      "id": "uebung",
+      "name": "Übung / Arbeitsauftrag",
+      "einsatz": "Jede Praxisphase. Konkreter Auftrag mit Dauer, Sozialform, Ergebnis; Basis- und Vertiefungspfad.",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "auftrag": {"typ": "liste", "max_eintraege": 5, "max": 120, "pflicht": true},
+        "dauer": {"typ": "text", "max": 15, "pflicht": true},
+        "sozialform": {"typ": "text", "max": 30},
+        "material": {"typ": "text", "max": 60},
+        "ergebnis": {"typ": "text", "max": 110, "pflicht": true},
+        "basis": {"typ": "text", "max": 120},
+        "vertiefung": {"typ": "text", "max": 120}
+      }
+    },
+    {
+      "id": "material",
+      "name": "Übungsmaterial (fiktive Ausgangsdaten)",
+      "einsatz": "Vollständige Eingabedaten für eine Übung: Text, Daten oder Tabelle.",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "text": {"typ": "text", "max": 900},
+        "kopf": {"typ": "liste", "max_eintraege": 5, "max": 28},
+        "zeilen": {"typ": "tabelle", "max_eintraege": 7, "max": 60}
+      }
+    },
+    {
+      "id": "loesung",
+      "name": "Musterlösung",
+      "einsatz": "Nachvollziehbare Lösung zur vorherigen Übung (für Dozierende/Nachbesprechung).",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "punkte": {"typ": "liste", "max_eintraege": 6, "max": 140, "pflicht": true},
+        "hinweis": {"typ": "text", "max": 140}
+      }
+    },
+    {
+      "id": "reflexion",
+      "name": "Reflexion / Transfer",
+      "einsatz": "Sicherung, Transfer in den eigenen Arbeitsalltag.",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "fragen": {"typ": "liste", "max_eintraege": 4, "max": 120, "pflicht": true}
+      }
+    },
+    {
+      "id": "zusammenfassung",
+      "name": "Zusammenfassung",
+      "einsatz": "Ende eines Blocks oder Tages.",
+      "felder": {
+        "titel": {"typ": "text", "max": 60, "pflicht": true},
+        "kernpunkte": {"typ": "liste", "max_eintraege": 5, "max": 110, "pflicht": true},
+        "ausblick": {"typ": "text", "max": 120}
+      }
+    },
+    {
+      "id": "quellen",
+      "name": "Quellen",
+      "einsatz": "Quellen eines Blocks (wird bei Bedarf automatisch ergänzt).",
+      "felder": {
+        "titel": {"typ": "text", "max": 40, "pflicht": true},
+        "eintraege": {"typ": "liste", "max_eintraege": 10, "max": 160, "pflicht": true}
+      }
+    },
+    {
+      "id": "pause",
+      "name": "Pause",
+      "einsatz": "Pausen laut Zeitplan.",
+      "felder": {
+        "titel": {"typ": "text", "max": 30, "pflicht": true},
+        "dauer": {"typ": "text", "max": 20},
+        "text": {"typ": "text", "max": 100}
+      }
+    }
+  ]
+}
