@@ -1,22 +1,28 @@
-# Beispiel: Renderer neben n8n betreiben (gleiches Docker-Netz wie n8n).
+# ECOMEX Folien-Renderer neben n8n betreiben (gleiches Docker-Netz wie n8n).
 # n8n erreicht den Dienst dann unter http://ecomex-renderer:8080
+#
+#   1. RENDERER_API_KEY und N8N_NETZ in einer .env-Datei neben dieser Datei setzen (siehe docs/05)
+#   2. docker compose pull && docker compose up -d
+#   3. docker exec ecomex-renderer python tools/selbsttest.py
 services:
   ecomex-renderer:
-    build: .
+    image: ghcr.io/ecomewb/ecomex-renderer:${RENDERER_VERSION:-latest}
     container_name: ecomex-renderer
     restart: unless-stopped
     environment:
-      RENDERER_API_KEY: "${RENDERER_API_KEY}"   # langes Zufallspasswort, identisch im n8n-Credential
-      EXTRACT_MAX_MB: "${EXTRACT_MAX_MB:-150}"  # größere Dateien bitte als PDF exportieren
-    volumes:
-      - ../design/ECOMEX_Masterlayout_6.2.pptx:/srv/masters/ecomex_master.pptx:ro   # Originalmaster aus dem Repo (bei neuem Master Pfad anpassen)
-      - ./config:/srv/config:ro
+      RENDERER_API_KEY: "${RENDERER_API_KEY:?RENDERER_API_KEY in .env setzen}"   # identisch im n8n-Credential „ECOMEX Renderer“
+      EXTRACT_MAX_MB: "${EXTRACT_MAX_MB:-150}"                                   # größere Dateien bitte als PDF exportieren
+    # Der Folienmaster ist im Image eingebaut. Anderen Master ohne neues Image nutzen:
+    # volumes:
+    #   - ./ECOMEX_Master.pptx:/srv/masters/ecomex_master.pptx:ro
+    mem_limit: 1536m
     # Nicht öffentlich freigeben – nur intern für n8n:
     expose:
       - "8080"
     networks:
-      - n8n_default
+      - n8n
 
 networks:
-  n8n_default:
-    external: true   # Namen des bestehenden n8n-Netzes eintragen (docker network ls)
+  n8n:
+    external: true
+    name: ${N8N_NETZ:-n8n_default}   # Name des bestehenden n8n-Netzes (docker network ls)

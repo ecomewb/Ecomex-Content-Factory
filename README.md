@@ -8,6 +8,7 @@
 2. `docs/02_Datenpflege_und_Qualitaet.md` – Pflege, Berechtigungen, Freigaben
 3. `docs/03_Agenten_und_n8n.md` – Rollen und Datenflüsse
 4. `docs/04_Betrieb_mit_und_ohne_Renderer.md` – n8n-Workflows einrichten, betreiben und später sicher ändern
+   `docs/05_Renderer_einrichten.md` – Renderer neben n8n starten (für IT / go digital)
 5. `database/001_create_kb.sql` + `003_content_factory_betrieb.sql` – Wissensbasis und Ablage-Import
 
 ## Ordner
@@ -17,7 +18,7 @@
 | `governance/` | Regelwerk (curriculum, didaktik, design, qa_rules, content_workflow) – wird von n8n live geladen |
 | `design/` | Folienmaster 6.2 und Layoutbibliothek |
 | `workflows/` | 12 n8n-Workflows zum Import (ECOMEX 0–11, ECOMEX 11 = Systemcheck) |
-| `renderer/` | optionaler Folien-Renderer (Docker); Layoutkatalog der Agenten in `renderer/app/catalog.json` |
+| `renderer/` | optionaler Folien-Renderer (Docker-Image `ghcr.io/ecomewb/ecomex-renderer`, gebaut von GitHub Actions); Layoutkatalog der Agenten in `renderer/app/catalog.json` |
 | `database/` | SQL für Supabase |
 | `tools/` | `pruefe_workflows.py` (Prüfer nach Änderungen in n8n), Generator, Ausdrucks- und Integrationstests |
 | `docs/` | Anleitungen |

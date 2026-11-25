@@ -24,27 +24,27 @@ Alle Endpunkte außer `/health` verlangen den Header `X-API-Key` (= Umgebungsvar
 
 ## Betrieb (für IT / go digital)
 
+Fertiges Image mit eingebautem ECOMEX-Master: `ghcr.io/ecomewb/ecomex-renderer` – gebaut und getestet von
+GitHub Actions (`.github/workflows/renderer.yml`) bei jeder Änderung an `renderer/` oder am Master.
+Schritt-für-Schritt-Anleitung: **`docs/05_Renderer_einrichten.md`**.
+
 ```bash
-# 1. Master: docker-compose.yml bindet ../design/ECOMEX_Masterlayout_6.2.pptx direkt ein.
-#    Neuer Master → Datei in design/ ablegen und den Pfad in docker-compose.yml anpassen.
-# 2. Optional: Firmenschriften (TTF/OTF) nach fonts/ – sonst wird Open Sans verwendet
-# 3. Bauen und starten (im selben Docker-Netz wie n8n)
-export RENDERER_API_KEY="$(openssl rand -hex 24)"
-docker compose up -d --build
-# 4. Test
-curl http://localhost:8080/health      # bzw. aus dem n8n-Container: http://ecomex-renderer:8080/health
+# auf dem Server, auf dem n8n läuft – Ordner mit docker-compose.yml und .env (aus .env.example)
+docker compose pull && docker compose up -d
+docker exec ecomex-renderer python tools/selbsttest.py      # → „ALLES IN ORDNUNG“
 ```
 
-- Ressourcen: ca. 1 GB RAM, 1 vCPU genügen. 55 Folien: PPTX ≈ 1 s, PDF-Vorschau ≈ 3 s.
-- Den Port **nicht** öffentlich freigeben; n8n spricht den Dienst intern an.
-- Alternativ als Azure Container App (Region West Europe) betreibbar; dann HTTPS + API-Key.
-- Update des Masters: Datei austauschen, Container neu starten. Mit `POST /inspect` prüfen, welche
+- Ressourcen: ca. 1 GB RAM, 1 vCPU genügen. 24 Folien: PPTX ≈ 1 s, PDF-Vorschau ≈ 5 s.
+- Den Port **nicht** öffentlich freigeben; n8n spricht den Dienst intern an (`http://ecomex-renderer:8080`).
+- Selbst bauen statt ziehen: im Repo-Hauptordner `docker build -f renderer/Dockerfile -t ghcr.io/ecomewb/ecomex-renderer:latest .`
+- Neuer Master: Datei in `design/` ablegen und `MASTER_DATEI` im Dockerfile anpassen → GitHub baut ein neues Image →
+  auf dem Server `docker compose pull && docker compose up -d`. Mit `POST /inspect` prüfen, welche
   Master-Layouts für Titel-, Kapitel- und Inhaltsfolien gewählt werden; bei Bedarf in
   `config/master_map.json` übersteuern, z. B. `{"default": "Nur Titel", "kapitel": "Kapiteltrenner"}`.
 - Die n8n-Workflows funktionieren **auch ohne Renderer** (siehe `docs/04_Betrieb_mit_und_ohne_Renderer.md`);
   ECOMEX 0 prüft `/health` und wählt den Weg automatisch.
-- Ohne Master-Datei nutzt der Dienst einen neutralen **Demo-Master** und meldet das
-  im Prüfbericht.
+- Ohne Master-Datei nutzt der Dienst einen neutralen **Demo-Master** und meldet das im Prüfbericht
+  und im Selbsttest.
 
 ## Wie der Renderer gestaltet
 

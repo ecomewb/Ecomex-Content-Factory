@@ -1,17 +1,25 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "files": {
+    ".dockerignore": {
+      "sha256": "c9299147a6479de553f95280e5f5bbc8746d95477f1921cb397863c42087535a",
+      "bytes": 134
+    },
     ".env.example": {
       "sha256": "890c7d9bf07ae9de9084dd863516d81bc447a790f7543120c7f257b97742a4d9",
       "bytes": 223
+    },
+    ".github/workflows/renderer.yml": {
+      "sha256": "e360385e463c8b8377c28470fc41c95fadc3d8bc5f0203c9a703bbcc11e2516d",
+      "bytes": 2014
     },
     ".gitignore": {
       "sha256": "81bdb12963a5b5e355a86728f46c0773a79a10f681ad9b49b0b9b670a33f34ec",
       "bytes": 302
     },
     "README.md": {
-      "sha256": "5d229fdf94dc0c8786ec23035c9bec8924e16454a8dd46fb68ab4db26b513444",
-      "bytes": 3239
+      "sha256": "ee1acb28f709dadae8149d17018305f0b808115024eb6db588f43577552a398e",
+      "bytes": 3396
     },
     "database/001_create_kb.sql": {
       "sha256": "51a79c3981ae03330a7cb01edb4ea39e24397f347388156e3b8605d30c689ce4",
@@ -54,8 +62,12 @@
       "bytes": 3476
     },
     "docs/04_Betrieb_mit_und_ohne_Renderer.md": {
-      "sha256": "a6b149940874c9f3c75629db3fba3ca6f433b38f885a35f6d6c61db1b49437b7",
-      "bytes": 12950
+      "sha256": "6d93ce5fe5801a1851948e87c02d2b2c7cfa53e3aacee14965fd9cce4238448f",
+      "bytes": 13028
+    },
+    "docs/05_Renderer_einrichten.md": {
+      "sha256": "6e20f952401d9d7602ed93ab6fbaeb7c85d4686624ea222eeb8ee13e3412d8c3",
+      "bytes": 4776
     },
     "governance/content_workflow.md": {
       "sha256": "386d67c5cac3c7a629d9d18e81bc7d90b1dbd5d6ac1a3e80003341192c703a17",
@@ -85,13 +97,17 @@
       "sha256": "a9aade8e5a646658ace9fbeee8f350a4b94a54b6a1533586f3505640bd5c374b",
       "bytes": 16
     },
+    "renderer/.env.example": {
+      "sha256": "1b8eba0278f0f60a352621875fa19a27b18d2ca87c4ae956f291d6327a57efce",
+      "bytes": 278
+    },
     "renderer/Dockerfile": {
-      "sha256": "d0d227789963705f3d59f9d0656bfecbd9027709bf27e478c023fdd06d2180e4",
-      "bytes": 1014
+      "sha256": "1179326b4b3a2479a1f2b5a21f2cf8007111249505f54afbc83a325bb314a464",
+      "bytes": 1995
     },
     "renderer/README.md": {
-      "sha256": "1696948eca223f0f9cf81c79f6de9c2c1ca86dfdb4ec616438a55b422df1d968",
-      "bytes": 4892
+      "sha256": "778c0126b62fc5d6987d70b867a5de4b11fc2642029ae6869c8ef70c5e993a36",
+      "bytes": 5096
     },
     "renderer/app/__init__.py": {
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -134,8 +150,8 @@
       "bytes": 182
     },
     "renderer/docker-compose.yml": {
-      "sha256": "35e6a70ef73d713497523ef56484b6306b47cae9cd267e9253c93e2cbbb3e3f9",
-      "bytes": 881
+      "sha256": "be4697170d0461fb47b5d932656da66a1f158863639ae47bcbb4a6ffae017838",
+      "bytes": 1226
     },
     "renderer/fonts/LIESMICH.txt": {
       "sha256": "0a3ec5ac5b673bf8374430096bf08dbe16d7c7ce5324360a63933e2e7925502d",
@@ -160,6 +176,10 @@
     "renderer/tools/make_demo_master.py": {
       "sha256": "544475874e1ca385bfafcde6b301e3fdce177947f5e5fb1be91c61acaf32d471",
       "bytes": 6967
+    },
+    "renderer/tools/selbsttest.py": {
+      "sha256": "4d12b2046fab4cfa352d610b65e394031b4570bc91b0f9bb0776127a92754dff",
+      "bytes": 6092
     },
     "samples/ECOMEX_slide_specs_examples_v3.json": {
       "sha256": "48f0132b1f27839fcf657f2621b7aede40c5c4ff2737dd723e17b92f83a63370",

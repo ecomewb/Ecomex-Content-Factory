@@ -2,7 +2,7 @@
 
 Stand: Content Factory v0.3 · n8n ab 2.46 · Supabase-Projekt *Ecomex-Content-Factory*
 
-Die Workflows funktionieren **mit und ohne Renderer**. Ob der Renderer läuft, prüft ECOMEX 0 bei jedem Lauf
+Die Workflows funktionieren **mit und ohne Renderer** (Renderer einrichten: `docs/05_Renderer_einrichten.md`). Ob der Renderer läuft, prüft ECOMEX 0 bei jedem Lauf
 (`GET /health`, 8 Sekunden). Ist er nicht erreichbar oder fällt er mitten im Lauf aus, nimmt jeder Workflow
 automatisch den Ersatzweg. Niemand muss etwas umschalten.
 
@@ -149,7 +149,7 @@ Die Workflows dürfen in n8n weiterentwickelt werden. Diese Punkte halten das Zu
 
 | Meldung | Ursache | Lösung |
 |---|---|---|
-| QA-Bericht: „Renderer nicht erreichbar – Weg ohne Renderer (…ENOTFOUND…)“ | Renderer-Container läuft nicht / anderes Docker-Netz | `docker compose up -d` im Ordner `renderer/`; Netzname prüfen |
+| QA-Bericht: „Renderer nicht erreichbar – Weg ohne Renderer (…ENOTFOUND…)“ | Renderer-Container läuft nicht / anderes Docker-Netz | Renderer einrichten bzw. starten: `docs/05_Renderer_einrichten.md`; Netzname prüfen |
 | „Dateityp .pptx kann ohne Renderer nicht gelesen werden“ | weder Renderer noch Azure | Datei als PDF speichern, Azure-Endpoint eintragen oder Renderer starten |
 | „Azure Document Intelligence konnte die Datei nicht lesen …“ | Datei beschädigt, Schlüssel falsch, Limit | Systemcheck ausführen; Free-Tarif liest nur 4 MB / 2 Seiten |
 | Node rot: „Credentials not found“ / „Node does not have any credentials set“ | Credential im Node nicht gewählt | im Node das Credential laut 🔑-Hinweis wählen |
