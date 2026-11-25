@@ -1,4 +1,4 @@
-# 05 · Renderer einrichten (für IT / go digital)
+# 05 · Renderer einrichten (für IT / Hetzner-Server)
 
 Der **ECOMEX Folien-Renderer** ist ein kleiner interner Webdienst. n8n schickt ihm die fertigen Folieninhalte,
 er baut daraus eine editierbare PowerPoint im echten ECOMEX-Folienmaster, eine PDF-Vorschau und einen
@@ -12,13 +12,18 @@ automatisch geprüft und visuell kontrolliert – und es entstehen keine Kosten 
 
 | | |
 |---|---|
-| Ort | derselbe Server/Docker-Host wie n8n (go digital) |
+| Ort | derselbe Hetzner-Server/Docker-Host wie n8n |
 | Software | Docker mit Compose |
 | Ressourcen | 1 vCPU, 1–1,5 GB RAM, ca. 1,2 GB Plattenplatz für das Image |
 | Netz | nur intern: gleiches Docker-Netz wie der n8n-Container, **kein** öffentlicher Port |
 | Image | `ghcr.io/ecomewb/ecomex-renderer:latest` (enthält den ECOMEX-Master 6.2) |
 
 ## Einrichtung (ca. 15 Minuten)
+
+Auf dem Hetzner-Server per SSH. Liegt n8n auf einem anderen Hetzner-Server als der Renderer, statt des
+gemeinsamen Docker-Netzes das private Hetzner-Netz (Cloud Network) nutzen und `expose` durch
+`ports: ["<private-IP>:8080:8080"]` ersetzen – nie an die öffentliche IP binden; zusätzlich die Hetzner-Firewall
+für Port 8080 nur aus dem privaten Netz öffnen. In ECOMEX 0 dann `renderer_url` = `http://<private-IP>:8080`.
 
 1. **Ordner anlegen** auf dem n8n-Server, z. B. `/opt/ecomex-renderer`, und dort ablegen:
    `docker-compose.yml` und `.env.example` aus dem Repo-Ordner `renderer/`.
@@ -62,15 +67,15 @@ automatisch geprüft und visuell kontrolliert – und es entstehen keine Kosten 
 - Der Container läuft ohne Root-Rechte, speichert nichts und braucht keinen Internetzugang.
 - Das Image enthält den ECOMEX-Folienmaster. Ist das Repository privat, bleibt auch das Image privat.
 
-## Alternative ohne Zugriff auf den n8n-Server: Azure Container Apps
+## Alternative: Azure Container Apps
 
 Wenn der Renderer nicht neben n8n laufen kann: in Azure (Region West Europe) eine Container App aus dem
 Image `ghcr.io/ecomewb/ecomex-renderer:latest` anlegen, Port 8080, Umgebungsvariable `RENDERER_API_KEY`,
 Ingress *extern* (HTTPS), 1 vCPU / 2 GiB, min. 0–1 Replikat. In ECOMEX 0 dann `renderer_url` =
 `https://<app-name>.<region>.azurecontainerapps.io`. Der API-Key schützt den Dienst; trotzdem sollte die
-App nur aus dem Netz von go digital erreichbar sein (IP-Einschränkung im Ingress).
+App nur aus dem Netz des n8n-Servers erreichbar sein (IP-Einschränkung im Ingress).
 
-## E-Mail-Vorlage an go digital / IT
+## E-Mail-Vorlage an die IT
 
 > Betreff: Kleiner interner Docker-Dienst neben n8n (ECOMEX Folien-Renderer)
 >

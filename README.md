@@ -8,7 +8,7 @@
 2. `docs/02_Datenpflege_und_Qualitaet.md` – Pflege, Berechtigungen, Freigaben
 3. `docs/03_Agenten_und_n8n.md` – Rollen und Datenflüsse
 4. `docs/04_Betrieb_mit_und_ohne_Renderer.md` – n8n-Workflows einrichten, betreiben und später sicher ändern
-   `docs/05_Renderer_einrichten.md` – Renderer neben n8n starten (für IT / go digital)
+   `docs/05_Renderer_einrichten.md` – Renderer neben n8n starten (für IT / Hetzner-Server)
 5. `database/001_create_kb.sql` + `003_content_factory_betrieb.sql` – Wissensbasis und Ablage-Import
 
 ## Ordner

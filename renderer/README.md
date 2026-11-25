@@ -22,7 +22,7 @@ Kein KI-Aufruf, keine Datenbank, keine Datenhaltung: jede Anfrage wird im Speich
 
 Alle Endpunkte außer `/health` verlangen den Header `X-API-Key` (= Umgebungsvariable `RENDERER_API_KEY`).
 
-## Betrieb (für IT / go digital)
+## Betrieb (für IT / Hetzner-Server)
 
 Fertiges Image mit eingebautem ECOMEX-Master: `ghcr.io/ecomewb/ecomex-renderer` – gebaut und getestet von
 GitHub Actions (`.github/workflows/renderer.yml`) bei jeder Änderung an `renderer/` oder am Master.
