@@ -141,3 +141,8 @@ COMMIT;
 -- Prüfen (verändert nichts):
 -- SELECT * FROM public.ecomex_kb_status();
 -- SELECT object_path, bytes, empfohlen, grund FROM public.ecomex_storage_inventory() ORDER BY 1;
+
+-- Schreibrechte für n8n (Service-Key): ohne diese Zeilen meldet der Import
+-- „permission denied for table ecomex_documents“ (angewendet am 25.11.2026).
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.ecomex_sources, public.ecomex_documents TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
